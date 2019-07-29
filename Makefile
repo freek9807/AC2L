@@ -35,7 +35,7 @@ out:
 	$(call generate_files)
 	./ac2l < test/$(FILE).txt > out/$(OUTPUT).txt
 #  Prende un file in input e lo esegue in LISP
-.PHONY: tof
+.PHONY: tol
 tol:
 	$(call generate_files)
 	./ac2l < test/$(FILE).txt | $(CLISP)

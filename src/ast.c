@@ -5,8 +5,9 @@
 #define generate_ternary_exp_node(term1,term2,term3) generate_new_exp_node(OP_TERNARY,NULL,term1,term2,term3)
 #define generate_not_exp_node(term1) generate_new_exp_node(OP_NOT,NULL,term1,NULL,NULL)
 #define generate_exp_node(type,term1,term2) generate_new_exp_node(type,NULL,term1,term2,NULL)
-#define generate_num_operando_node(n) generate_operando_node(TERM_NUMBER,n,NULL)
-#define generate_exp_operando_node(e) generate_operando_node(TERM_EXP,0,e)
+#define generate_num_operando_node(n) generate_operando_node(TERM_NUMBER,n,NULL,NULL)
+#define generate_exp_operando_node(e) generate_operando_node(TERM_EXP,0,e,NULL)
+#define generate_var_operando_node(v) generate_operando_node(TERM_VARIABLE,0,NULL,v)
 
 #include <stdio.h>
 #include <string.h>
@@ -69,16 +70,16 @@ typedef struct assign assign_node;
 typedef struct var{
   char* id;
   array_node* array;
-  assign_node* assign;
   VAR_TYPE type;
 } var_node;
 // Definzione della struttura del nodo variabile
 typedef struct def_var{
   var_node* var;
+  assign_node* assign;
 } def_var_node;
 // Definzione di una lista di argomenti di funzione
 typedef struct args{
-  char* id;
+  var_node* var;
   struct args* next;
 } args_node;
 //Definizione del nodo funzione
@@ -110,6 +111,7 @@ typedef struct operando{
   int num;
   exp_node* exp;
   TERM_TYPE type;
+  var_node* var;
 } operando_node;
 // Nodo che definisce un termine
 typedef struct termine{
@@ -147,11 +149,12 @@ lisp_code_node* generate_lisp_code_node(char* string,lisp_code_node* next){
   return lisp;
 }
 // Funzione che restituisce un nodo con definizione di variabile
-def_var_node* generate_def_var_node(var_node* var){
+def_var_node* generate_def_var_node(var_node* var,assign_node* assign){
 
   def_var_node* def_var = ALLOC(def_var_node,1);
 
   def_var->var = var;
+  def_var->assign = assign;
 
   return def_var;
 
@@ -179,11 +182,10 @@ def_node* generate_def_node(DEF_TYPE type,func_node* func ,def_var_node* def_var
   return def;
 }
 // Funzione che genera un nodo ti tipo variabile
-var_node* generate_var_node(char* id, array_node* array,assign_node* assign){
+var_node* generate_var_node(char* id, array_node* array){
   var_node* node = ALLOC(var_node,1);
 
   node->id = id;
-  node->assign = assign;
   if(array == NULL)
     node->type = VAR_INT;
   else
@@ -202,10 +204,10 @@ AST_node* generate_ast_node(def_node* def,lisp_code_node* lisp){
   return node;
 }
 // Genera un nuovo nodo di argomenti di funzione
-args_node* generate_args_node(char* id,args_node* next){
+args_node* generate_args_node(var_node* var,args_node* next){
   args_node* node = ALLOC(args_node,1);
 
-  node->id = strdup(id);
+  node->var = var;
   node->next = next;
 
   return node;
@@ -231,12 +233,13 @@ assign_node* generate_assign_node(exp_node* exp){
   return node;
 }
 // Genera un nodo operando
-operando_node* generate_operando_node(TERM_TYPE type,int num,exp_node* exp){
+operando_node* generate_operando_node(TERM_TYPE type,int num,exp_node* exp,var_node* var){
   operando_node* node = ALLOC(operando_node,1);
 
   node->type = type;
   node->num = num;
   node->exp = exp;
+  node->var = var;
 
   return node;
 }

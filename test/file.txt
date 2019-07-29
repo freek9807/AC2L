@@ -1,0 +1,5 @@
+int a = 4;
+
+int prova(int a,int b){}
+int main(){}
+//@ (write a)

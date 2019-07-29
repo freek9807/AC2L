@@ -66,10 +66,10 @@ def          :         func def { $$ = generate_func_def_node($1,$2); }
              |  /* lambda */  { $$ = NULL; }
              ;
 
-def_var      :     INTEGER var ';'	{ $$ = generate_def_var_node($2); }
+def_var      :     INTEGER var assign ';'	{ $$ = generate_def_var_node($2,$3); }
              ;
 
-var          :     IDENTIF array assign { $$ = generate_var_node($1,$2,$3); }
+var          :     IDENTIF array  { $$ = generate_var_node($1,$2); }
             ;
 
 array       :       '[' NUMBER ']' array { $$ = generate_array_node($2,$4); }
@@ -83,7 +83,7 @@ func         :          INTEGER IDENTIF '(' arg ')' '{' '}' { $$ = generate_func
               |         VOID IDENTIF '(' arg ')' '{' '}' { $$ = generate_func_node(FUNC_VOID,$2,$4); }
              ;
 
-arg          :          INTEGER IDENTIF args { $$ = generate_args_node($2,$3); }
+arg          :          INTEGER var args { $$ = generate_args_node($2,$3); }
               |         /* lambda */ { $$ = NULL; }
              ;
 
@@ -118,6 +118,7 @@ termine      :       operando				{ $$ = generate_termine_node('+' , $1); }
 
 operando     :      NUMBER 			        { $$ = generate_num_operando_node($1); }
              | '(' exp ')'		{ $$ = generate_exp_operando_node($2); }
+             |  var           { $$ = generate_var_operando_node($1); }
              ;
 
 lisp_code    :     /* lambda */      { $$ = NULL; }
