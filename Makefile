@@ -22,7 +22,7 @@ endef
 # Compila i file FLEX/BISON e permette di inserire codice da bash
 main:
 	$(call generate_files)
-	./ac2l
+	valgrind ./ac2l
 # Esegue il codice scitto da bash in LISP
 .PHONY: ac2l
 ac2l:

@@ -5,9 +5,14 @@
 #define generate_ternary_exp_node(term1,term2,term3) generate_new_exp_node(OP_TERNARY,NULL,term1,term2,term3)
 #define generate_not_exp_node(term1) generate_new_exp_node(OP_NOT,NULL,term1,NULL,NULL)
 #define generate_exp_node(type,term1,term2) generate_new_exp_node(type,NULL,term1,term2,NULL)
-#define generate_num_operando_node(n) generate_operando_node(TERM_NUMBER,n,NULL,NULL)
-#define generate_exp_operando_node(e) generate_operando_node(TERM_EXP,0,e,NULL)
-#define generate_var_operando_node(v) generate_operando_node(TERM_VARIABLE,0,NULL,v)
+#define generate_num_operando_node(n) generate_operando_node(TERM_NUMBER,n,NULL,NULL,NULL)
+#define generate_exp_operando_node(e) generate_operando_node(TERM_EXP,0,e,NULL,NULL)
+#define generate_var_operando_node(v) generate_operando_node(TERM_VARIABLE,0,NULL,v,NULL)
+#define generate_func_operando_node(f) generate_operando_node(TERM_FUNCALL,0,NULL,NULL,f)
+#define generate_exp_assign_node(e) generate_assign_node(ASS_VAR,e,NULL)
+#define generate_array_assign_node(a) generate_assign_node(ASS_ARRAY,NULL,a)
+#define generate_ls_exp_array(e) generate_array_content_node(NULL,e)
+#define generate_ls_matrix_array(c) generate_array_content_node(c,NULL)
 
 #include <stdio.h>
 #include <string.h>
@@ -29,6 +34,11 @@ typedef enum {
   DEF_FUNC,
   DEF_VAR
 } DEF_TYPE;
+// Definizione dei tipi di assegnamento
+typedef enum {
+  ASS_VAR,
+  ASS_ARRAY
+} ASS_TYPE;
 //Tipo di operatore
 typedef enum ExpType
 {
@@ -106,12 +116,15 @@ typedef struct principale{
   lisp_code_node* lisp;
 } AST_node;
 typedef struct exp exp_node;
+
+typedef struct funcall funcall_node;
 // Nodo che definisce un operatore
 typedef struct operando{
   int num;
   exp_node* exp;
   TERM_TYPE type;
   var_node* var;
+  funcall_node* func;
 } operando_node;
 // Nodo che definisce un termine
 typedef struct termine{
@@ -126,10 +139,34 @@ typedef struct exp{
   struct exp* term2;
   struct exp* term3;
 } exp_node;
+
+typedef struct list_exp{
+  exp_node* exp;
+  struct list_exp* next;
+} list_exp_node;
+
+typedef struct as_ar_list as_ar_list_node;
+
+typedef struct array_content{
+  list_exp_node* ls;
+  as_ar_list_node* content;
+} array_content_node;
 // Nodo con il valore di un assegnamento
 typedef struct assign{
+  ASS_TYPE type;
   exp_node* exp;
+  array_content_node* array;
 } assign_node;
+
+typedef struct as_ar_list{
+  array_content_node* node;
+  struct as_ar_list* next;
+} as_ar_list_node;
+
+typedef struct funcall{
+  char* id;
+  list_exp_node* ls_exp;
+} funcall_node;
 // Funzione che restituisce un nodo di tipo array
 array_node* generate_array_node(int info, array_node* next){
   array_node* node = ALLOC(array_node,1);
@@ -225,21 +262,24 @@ exp_node* generate_new_exp_node(EXP_Type type,termine_node* term,exp_node* term1
   return exp;
 }
 // Genera un nodo con un assegnamento
-assign_node* generate_assign_node(exp_node* exp){
+assign_node* generate_assign_node(ASS_TYPE type,exp_node* exp,array_content_node* content){
   assign_node* node = ALLOC(assign_node,1);
 
+  node->type = type;
   node->exp = exp;
+  node->array = content;
 
   return node;
 }
 // Genera un nodo operando
-operando_node* generate_operando_node(TERM_TYPE type,int num,exp_node* exp,var_node* var){
+operando_node* generate_operando_node(TERM_TYPE type,int num,exp_node* exp,var_node* var,funcall_node* func){
   operando_node* node = ALLOC(operando_node,1);
 
   node->type = type;
   node->num = num;
   node->exp = exp;
   node->var = var;
+  node->func = func;
 
   return node;
 }
@@ -249,6 +289,43 @@ termine_node* generate_termine_node(char c,operando_node* op){
 
   node->unary_sign = c;
   node->op = op;
+
+  return node;
+}
+
+list_exp_node* generate_list_exp_node(exp_node* exp, list_exp_node* next ){
+    list_exp_node* node = ALLOC(list_exp_node,1);
+
+    node->exp = exp;
+    node->next = next;
+
+    return node;
+}
+
+array_content_node* generate_array_content_node(as_ar_list_node* content , list_exp_node* ls)
+{
+  array_content_node* node = ALLOC(array_content_node,1);
+
+  node->ls = ls;
+  node->content = content;
+
+  return node;
+}
+
+as_ar_list_node* generate_as_ar_list_node(array_content_node* node,as_ar_list_node* next){
+  as_ar_list_node* val = ALLOC(as_ar_list_node,1);
+
+  val->node = node;
+  val->next = next;
+
+  return val;
+}
+
+funcall_node* generate_funcall_node(char* id,list_exp_node* ls){
+  funcall_node* node = ALLOC(funcall_node,1);
+
+  node->id = strdup(id);
+  node->ls_exp = ls;
 
   return node;
 }

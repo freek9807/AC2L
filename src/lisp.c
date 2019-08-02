@@ -18,6 +18,10 @@ void LISP_termine_node(termine_node* node){
 
 void LISP_exp_node(exp_node* node);
 
+void LISP_array_node(array_node* node);
+
+void LISP_base_list_exp(list_exp_node* ls);
+
 void LISP_operando_node(operando_node* node){
   switch (node->type) {
 
@@ -26,8 +30,27 @@ void LISP_operando_node(operando_node* node){
     break;
 
     case TERM_VARIABLE:
-    
+    switch (node->var->type) {
+      case VAR_INT:
+        printf(" %s", node->var->id );
+      break;
+
+      case VAR_ARRAY:
+      printf(" ( aref ");
+      printf(" %s", node->var->id );
+      LISP_array_node(node->var->array);
+      printf(" )");
+      break;
+    }
     break;
+
+    case TERM_FUNCALL:
+      printf(" (");
+      printf(" %s",node->func->id );
+      LISP_base_list_exp(node->func->ls_exp);
+      printf("%s", " )");
+    break;
+
     case TERM_EXP:
       LISP_exp_node(node->exp);
     break;
@@ -155,6 +178,37 @@ void LISP_array_node(array_node* node){
   LISP_array_node(node->next);
 }
 
+void LISP_base_list_exp(list_exp_node* ls){
+  if(ls == NULL)
+    return ;
+
+  LISP_exp_node(ls->exp);
+  LISP_base_list_exp(ls->next);
+
+}
+
+void LISP_as_ar_list_node(as_ar_list_node* ls);
+
+void LISP_array_content_node(array_content_node* node){
+  printf("%s", "(");
+  if(node->ls != NULL){
+    LISP_base_list_exp(node->ls);
+  }
+  else{
+    LISP_as_ar_list_node(node->content);
+  }
+  printf("%s", " )" );
+}
+
+void LISP_as_ar_list_node(as_ar_list_node* ls){
+  if(ls == NULL)
+    return;
+
+  LISP_array_content_node(ls->node);
+  printf("%s", " ");
+  LISP_as_ar_list_node(ls->next);
+}
+
 void LISP_def_var_node(def_var_node* node){
   printf(" (defvar %s",node->var->id);
   switch (node->var->type) {
@@ -168,7 +222,13 @@ void LISP_def_var_node(def_var_node* node){
     case VAR_ARRAY:
     printf("( make-array '(");
     LISP_array_node(node->var->array);
-    printf(" ))");
+    printf(" ) ");
+    if(node->assign != NULL)
+    {
+      printf("%s", ":initial-contents '");
+      LISP_array_content_node(node->assign->array);
+    }
+    printf("%s", " )");
     break;
   }
   printf(")\n");

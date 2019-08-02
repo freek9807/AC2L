@@ -20,11 +20,15 @@ int yyerror (char* mensaje);
       func_node* func;
       def_node* def;
       array_node* array;
+      array_content_node* content;
       args_node* args;
       assign_node* assign;
       exp_node* exp;
       termine_node* term;
       operando_node* op;
+      list_exp_node* ls_exp;
+      as_ar_list_node* ar_ls;
+      funcall_node* funcall;
       AST_node* ast;
 }
 
@@ -56,6 +60,10 @@ int yyerror (char* mensaje);
 %type <term> termine
 %type <op> operando
 %type <assign> assign
+%type <content> assign_array array_content
+%type <ls_exp> list_exp base_list_exp
+%type <ar_ls> as_ar_list as_ar_support
+%type <funcall> funcall
 %%
 
 principale  :   def lisp_code { $$ = generate_ast_node($1,$2); LISP_AST_node($$); }
@@ -76,11 +84,33 @@ array       :       '[' NUMBER ']' array { $$ = generate_array_node($2,$4); }
             | /* lambda */        { $$ = NULL; }
              ;
 
-assign       : '=' exp     { $$ = generate_assign_node($2); }
+assign       : '=' exp     { $$ = generate_exp_assign_node($2); }
+            | '=' assign_array  { $$ = generate_array_assign_node($2); }
             | /* lambda */ { $$ = NULL; }
              ;
+
+assign_array : '{' array_content '}' { $$ = $2;  }
+             ;
+
+array_content :   as_ar_list     { $$ = generate_ls_matrix_array($1); }
+              |   base_list_exp  { $$ = generate_ls_exp_array($1); }
+              ;
+
+as_ar_list    :  assign_array as_ar_support { $$ = generate_as_ar_list_node($1,$2); }
+              ;
+
+as_ar_support : ',' assign_array as_ar_support { $$ = generate_as_ar_list_node($2,$3); }
+              | /* lambda */ { $$ = NULL; }
+              ;
+
+base_list_exp:  exp list_exp { $$ = generate_list_exp_node($1,$2); }
+              ;
+list_exp      : ',' exp list_exp { $$ = generate_list_exp_node($2,$3); }
+              | /* lambda */ { $$ = NULL; }
+              ;
+
 func         :          INTEGER IDENTIF '(' arg ')' '{' '}' { $$ = generate_func_node(FUNC_INT,$2,$4); }
-              |         VOID IDENTIF '(' arg ')' '{' '}' { $$ = generate_func_node(FUNC_VOID,$2,$4); }
+             |         VOID IDENTIF '(' arg ')' '{' '}' { $$ = generate_func_node(FUNC_VOID,$2,$4); }
              ;
 
 arg          :          INTEGER var args { $$ = generate_args_node($2,$3); }
@@ -119,6 +149,10 @@ termine      :       operando				{ $$ = generate_termine_node('+' , $1); }
 operando     :      NUMBER 			        { $$ = generate_num_operando_node($1); }
              | '(' exp ')'		{ $$ = generate_exp_operando_node($2); }
              |  var           { $$ = generate_var_operando_node($1); }
+             |  funcall       { $$ = generate_func_operando_node($1); }
+             ;
+
+funcall      : IDENTIF '(' base_list_exp ')' { $$ = generate_funcall_node($1,$3); }
              ;
 
 lisp_code    :     /* lambda */      { $$ = NULL; }
