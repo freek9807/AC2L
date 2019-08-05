@@ -1,5 +1,6 @@
-int a = 4;
+int prova(int a,int b){
+int c = 2;
+c += a  + b;
+}
 
-int prova(int a,int b){}
-int main(){}
-//@ (write a)
+//@ (write (prova 2 3))

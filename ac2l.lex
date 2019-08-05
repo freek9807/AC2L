@@ -38,10 +38,10 @@ int yyparse();
 "<="            { return(LESS_EQ); }
 "=="            { return(EQ); }
 "!="            { return(NOTEQ); }
-"+="            { return(PLUSONE); }
-"-="            { return(MINUSONE); }
-"*="            { return(MULTONE); }
-"/="            { return(DIVONE); }
+"+="            { return(PLUSVAL); }
+"-="            { return(MINUSVAL); }
+"*="            { return(MULTVAL); }
+"/="            { return(DIVVAL); }
 [ \t\v\n\f\r]		{ ; }
 \#(.*)          { n_linea++; }
 \/\/@(.*)       {

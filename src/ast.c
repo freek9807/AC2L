@@ -13,7 +13,10 @@
 #define generate_array_assign_node(a) generate_assign_node(ASS_ARRAY,NULL,a)
 #define generate_ls_exp_array(e) generate_array_content_node(NULL,e)
 #define generate_ls_matrix_array(c) generate_array_content_node(c,NULL)
-
+#define generate_reduce_def_assign(o,v,e) generate_def_assign_node(v,generate_exp_assign_node(generate_exp_node(o,generate_num_exp_node(generate_termine_node('+' , generate_var_operando_node(v))),e)))
+#define generate_def_block_node(d,n) generate_block_node(BLOCK_DEF,d,NULL,n)
+#define generate_assign_block_node(a,n) generate_block_node(BLOCK_ASSIGN,NULL,a,n)
+#define generate_assign_ext_block_node(v,a,n) generate_block_node(BLOCK_ASSIGN,NULL,generate_def_assign_node(v,a),n)
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -61,6 +64,11 @@ typedef enum ExpType
   OP_TERNARY,
   OP_NUMERIC
 } EXP_Type;
+
+typedef enum {
+  BLOCK_DEF,
+  BLOCK_ASSIGN
+} BLOCK_TYPE;
 // Tipo di termine
 typedef enum TermineType
 {
@@ -87,16 +95,23 @@ typedef struct def_var{
   var_node* var;
   assign_node* assign;
 } def_var_node;
+// Definzione della struttura del nodo variabile
+typedef struct def_assign{
+  var_node* var;
+  assign_node* assign;
+} def_assign_node;
 // Definzione di una lista di argomenti di funzione
 typedef struct args{
   var_node* var;
   struct args* next;
 } args_node;
+typedef struct block block_node;
 //Definizione del nodo funzione
 typedef struct func{
   char* id;
   FUNC_TYPE type;
   args_node* args;
+  block_node* block;
 } func_node;
 // Definzione del nodo definizione
 typedef struct def{
@@ -167,6 +182,13 @@ typedef struct funcall{
   char* id;
   list_exp_node* ls_exp;
 } funcall_node;
+
+typedef struct block{
+  BLOCK_TYPE type;
+  def_var_node* def;
+  def_assign_node* ass;
+  struct block* next;
+} block_node;
 // Funzione che restituisce un nodo di tipo array
 array_node* generate_array_node(int info, array_node* next){
   array_node* node = ALLOC(array_node,1);
@@ -196,13 +218,25 @@ def_var_node* generate_def_var_node(var_node* var,assign_node* assign){
   return def_var;
 
 }
+// Funzione che restituisce un nodo con definizione di variabile
+def_assign_node* generate_def_assign_node(var_node* var,assign_node* assign){
+
+  def_assign_node* def_assign = ALLOC(def_assign_node,1);
+
+  def_assign->var = var;
+  def_assign->assign = assign;
+
+  return def_assign;
+
+}
 // Funzione che restituisce un nodo di funzione
-func_node* generate_func_node(FUNC_TYPE type,char* id,args_node* args){
+func_node* generate_func_node(FUNC_TYPE type,char* id,block_node* block,args_node* args){
 
   func_node* func = ALLOC(func_node,1);
 
   func->id = strdup(id);
   func->type = type;
+  func->block = block;
   func->args = args;
 
   return func;
@@ -326,6 +360,17 @@ funcall_node* generate_funcall_node(char* id,list_exp_node* ls){
 
   node->id = strdup(id);
   node->ls_exp = ls;
+
+  return node;
+}
+
+block_node* generate_block_node(BLOCK_TYPE type,def_var_node* def, def_assign_node* ass, block_node* next){
+  block_node* node = ALLOC(block_node,1);
+
+  node->type = type;
+  node->def = def;
+  node->ass = ass;
+  node->next = next;
 
   return node;
 }

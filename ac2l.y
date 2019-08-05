@@ -29,6 +29,8 @@ int yyerror (char* mensaje);
       list_exp_node* ls_exp;
       as_ar_list_node* ar_ls;
       funcall_node* funcall;
+      block_node* block;
+      def_assign_node* assign_block;
       AST_node* ast;
 }
 
@@ -37,7 +39,7 @@ int yyerror (char* mensaje);
 %token <string> INTEGER VOID
 %token <string> LISP_STRING STRING
 %token <string> DO WHILE IF THEN ELSE PRINT PUTS RETURN FOR
-%token <string> INC DEC PLUSONE MINUSONE MULTONE DIVONE
+%token <string> INC DEC PLUSVAL MINUSVAL MULTVAL DIVVAL
 %token <string> ANDL ORL GREATER_EQ LESS_EQ EQ NOTEQ
 %right '=' '?' ':'
 %left ANDL ORL
@@ -63,7 +65,9 @@ int yyerror (char* mensaje);
 %type <content> assign_array array_content
 %type <ls_exp> list_exp base_list_exp
 %type <ar_ls> as_ar_list as_ar_support
+%type <assign_block> assign_with_op
 %type <funcall> funcall
+%type <block> block
 %%
 
 principale  :   def lisp_code { $$ = generate_ast_node($1,$2); LISP_AST_node($$); }
@@ -89,6 +93,18 @@ assign       : '=' exp     { $$ = generate_exp_assign_node($2); }
             | /* lambda */ { $$ = NULL; }
              ;
 
+assign_with_op : var PLUSVAL exp ';' { $$ = generate_reduce_def_assign(OP_PLUS,$1,$3); }
+                | var MULTVAL exp ';' { $$ = generate_reduce_def_assign(OP_MINUS,$1,$3); }
+                | var MINUSVAL exp ';' { $$ = generate_reduce_def_assign(OP_MULT,$1,$3); }
+                | var DIVVAL exp ';' { $$ = generate_reduce_def_assign(OP_DIV,$1,$3); }
+                ;
+
+block        : def_var block { $$ = generate_def_block_node($1,$2); }
+             | assign_with_op block { $$ = generate_assign_block_node($1,$2); }
+             | var assign block { $$ = generate_assign_ext_block_node($1,$2,$3); }
+             | /* lambda */   { $$ = NULL; }
+             ;
+
 assign_array : '{' array_content '}' { $$ = $2;  }
              ;
 
@@ -109,8 +125,8 @@ list_exp      : ',' exp list_exp { $$ = generate_list_exp_node($2,$3); }
               | /* lambda */ { $$ = NULL; }
               ;
 
-func         :          INTEGER IDENTIF '(' arg ')' '{' '}' { $$ = generate_func_node(FUNC_INT,$2,$4); }
-             |         VOID IDENTIF '(' arg ')' '{' '}' { $$ = generate_func_node(FUNC_VOID,$2,$4); }
+func         :          INTEGER IDENTIF '(' arg ')' '{' block '}' { $$ = generate_func_node(FUNC_INT,$2,$7,$4); }
+             |         VOID IDENTIF '(' arg ')' '{' block '}' { $$ = generate_func_node(FUNC_VOID,$2,$7,$4); }
              ;
 
 arg          :          INTEGER var args { $$ = generate_args_node($2,$3); }

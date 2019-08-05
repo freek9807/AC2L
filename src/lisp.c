@@ -22,6 +22,20 @@ void LISP_array_node(array_node* node);
 
 void LISP_base_list_exp(list_exp_node* ls);
 
+void LISP_print_var_node(var_node* node){
+  switch (node->type) {
+    case VAR_INT:
+      printf(" %s", node->id );
+    break;
+
+    case VAR_ARRAY:
+    printf(" ( aref ");
+    printf(" %s", node->id );
+    LISP_array_node(node->array);
+    printf(" )");
+    break;
+  }
+}
 void LISP_operando_node(operando_node* node){
   switch (node->type) {
 
@@ -30,18 +44,7 @@ void LISP_operando_node(operando_node* node){
     break;
 
     case TERM_VARIABLE:
-    switch (node->var->type) {
-      case VAR_INT:
-        printf(" %s", node->var->id );
-      break;
-
-      case VAR_ARRAY:
-      printf(" ( aref ");
-      printf(" %s", node->var->id );
-      LISP_array_node(node->var->array);
-      printf(" )");
-      break;
-    }
+    LISP_print_var_node(node->var);
     break;
 
     case TERM_FUNCALL:
@@ -160,12 +163,15 @@ void LISP_args_node(args_node* args){
   LISP_args_node(args->next);
 }
 
+void LISP_block_node(block_node* node);
+
 void LISP_func_node(func_node* node){
   printf("( defun %s", node->id );
   printf(" (" );
   LISP_args_node(node->args);
   printf(" )");
   printf(" (" );
+  LISP_block_node(node->block);
   printf(" )");
   printf(" )\n" );
 }
@@ -209,8 +215,7 @@ void LISP_as_ar_list_node(as_ar_list_node* ls){
   LISP_as_ar_list_node(ls->next);
 }
 
-void LISP_def_var_node(def_var_node* node){
-  printf(" (defvar %s",node->var->id);
+void LISP_print_def_var_node_val(def_var_node* node){
   switch (node->var->type) {
     case VAR_INT:
       if(node->assign == NULL)
@@ -231,6 +236,16 @@ void LISP_def_var_node(def_var_node* node){
     printf("%s", " )");
     break;
   }
+}
+void LISP_def_var_node(def_var_node* node){
+  printf(" (defvar %s",node->var->id);
+  LISP_print_def_var_node_val(node);
+  printf(")\n");
+}
+
+void LISP_let_def_var_node(def_var_node* node){
+  printf(" ( %s",node->var->id);
+  LISP_print_def_var_node_val(node);
   printf(")\n");
 }
 
@@ -256,6 +271,47 @@ void LISP_lisp_code_node(lisp_code_node* node){
 
   printf("%s\n", node->value);
   LISP_lisp_code_node(node->next);
+}
+
+void LISP_block_operation(block_node* node){
+  switch (node->type) {
+    case BLOCK_ASSIGN:
+    switch (node->ass->var->type) {
+      case VAR_INT:
+        printf("%s", " setq" );
+      break;
+
+      case VAR_ARRAY:
+      printf("%s", " setf" );
+      break;
+    }
+    LISP_print_var_node(node->ass->var);
+    LISP_exp_node(node->ass->assign->exp);
+    break;
+
+  }
+}
+
+void LISP_block_node(block_node* node){
+  if(node != NULL)
+    if(node->type == BLOCK_DEF){
+      printf("%s","  let ");
+      printf("%s", " (" );
+      LISP_let_def_var_node(node->def);
+      printf("%s", " )" );
+      printf("%s", " (" );
+      LISP_block_node(node->next);
+      printf("%s"," )" );
+    } else if(node->next == NULL){
+      LISP_block_operation(node);
+    }else{
+          printf("%s"," progn " );
+          printf("%s", " (" );
+          printf("%s", " )" );
+          printf("%s", " (" );
+          LISP_block_node(node->next);
+          printf("%s", " )" );
+        }
 }
 
 void LISP_AST_node(AST_node*  node){
