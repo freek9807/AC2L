@@ -170,9 +170,9 @@ void LISP_func_node(func_node* node){
   printf(" (" );
   LISP_args_node(node->args);
   printf(" )");
-  printf(" (" );
+  printf("%s", " (" );
   LISP_block_node(node->block);
-  printf(" )");
+  printf("%s", " )" );
   printf(" )\n" );
 }
 
@@ -300,18 +300,42 @@ void LISP_if_node(if_node* node){
   }
 }
 
+void LISP_print_set_var(var_node* node) {
+  switch (node->type) {
+    case VAR_INT:
+      printf("%s", " setq" );
+    break;
+
+    case VAR_ARRAY:
+    printf("%s", " setf" );
+    break;
+  }
+}
+
+void LISP_pre_post_inc_node(pre_post_inc_node* node){
+  switch (node->p_type) {
+    case POST:
+      printf(" prog1" );
+    break;
+
+    case PRE:
+      printf(" prog2" );
+    break;
+  }
+  LISP_print_var_node(node->var);
+  printf(" (" );
+  LISP_print_set_var(node->var);
+  LISP_print_var_node(node->var);
+  printf("%s %c", " (",node->sign);
+  LISP_print_var_node(node->var);
+  printf("%s", " 1 )");
+  printf(" )" );
+}
+
 void LISP_block_operation(block_node* node){
   switch (node->type) {
     case BLOCK_ASSIGN:
-    switch (node->ass->var->type) {
-      case VAR_INT:
-        printf("%s", " setq" );
-      break;
-
-      case VAR_ARRAY:
-      printf("%s", " setf" );
-      break;
-    }
+    LISP_print_set_var(node->ass->var);
     LISP_print_var_node(node->ass->var);
     LISP_exp_node(node->ass->assign->exp);
     break;
@@ -320,6 +344,9 @@ void LISP_block_operation(block_node* node){
       LISP_if_node(node->if_n);
     break;
 
+    case BLOCK_PP:
+      LISP_pre_post_inc_node(node->pp);
+    break;
   }
 }
 
@@ -336,7 +363,7 @@ void LISP_block_node(block_node* node){
     } else if(node->next == NULL){
       LISP_block_operation(node);
     }else{
-          printf("%s"," progn " );
+          printf("%s","  progn " );
           printf("%s", " (" );
           LISP_block_operation(node);
           printf("%s", " )" );

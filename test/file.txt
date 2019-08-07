@@ -15,4 +15,7 @@ else{
   a += c + 2;
 }
 
+int sum(int a){
+  a++;
+}
 //@ (write (prova 2 3))
