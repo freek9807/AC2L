@@ -14,9 +14,11 @@
 #define generate_ls_exp_array(e) generate_array_content_node(NULL,e)
 #define generate_ls_matrix_array(c) generate_array_content_node(c,NULL)
 #define generate_reduce_def_assign(o,v,e) generate_def_assign_node(v,generate_exp_assign_node(generate_exp_node(o,generate_num_exp_node(generate_termine_node('+' , generate_var_operando_node(v))),e)))
-#define generate_def_block_node(d,n) generate_block_node(BLOCK_DEF,d,NULL,n)
-#define generate_assign_block_node(a,n) generate_block_node(BLOCK_ASSIGN,NULL,a,n)
-#define generate_assign_ext_block_node(v,a,n) generate_block_node(BLOCK_ASSIGN,NULL,generate_def_assign_node(v,a),n)
+#define generate_def_block_node(d,n) generate_block_node(BLOCK_DEF,d,NULL,NULL,n)
+#define generate_assign_block_node(a,n) generate_block_node(BLOCK_ASSIGN,NULL,a,NULL,n)
+#define generate_assign_ext_block_node(v,a,n) generate_block_node(BLOCK_ASSIGN,NULL,generate_def_assign_node(v,a),NULL,n)
+#define generate_if_block_node(if,n) generate_block_node(BLOCK_IF,NULL,NULL,if,n)
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -67,7 +69,8 @@ typedef enum ExpType
 
 typedef enum {
   BLOCK_DEF,
-  BLOCK_ASSIGN
+  BLOCK_ASSIGN,
+  BLOCK_IF
 } BLOCK_TYPE;
 // Tipo di termine
 typedef enum TermineType
@@ -183,12 +186,26 @@ typedef struct funcall{
   list_exp_node* ls_exp;
 } funcall_node;
 
+typedef struct if_block if_node;
+
 typedef struct block{
   BLOCK_TYPE type;
   def_var_node* def;
   def_assign_node* ass;
+  if_node* if_n;
   struct block* next;
 } block_node;
+
+typedef struct else_block{
+  block_node* block;
+} else_node;
+
+typedef struct if_block{
+  exp_node* exp;
+  block_node* block;
+  else_node* else_n;
+} if_node;
+
 // Funzione che restituisce un nodo di tipo array
 array_node* generate_array_node(int info, array_node* next){
   array_node* node = ALLOC(array_node,1);
@@ -364,13 +381,32 @@ funcall_node* generate_funcall_node(char* id,list_exp_node* ls){
   return node;
 }
 
-block_node* generate_block_node(BLOCK_TYPE type,def_var_node* def, def_assign_node* ass, block_node* next){
+block_node* generate_block_node(BLOCK_TYPE type,def_var_node* def, def_assign_node* ass, if_node* if_n, block_node* next){
   block_node* node = ALLOC(block_node,1);
 
   node->type = type;
   node->def = def;
   node->ass = ass;
+  node->if_n = if_n;
   node->next = next;
+
+  return node;
+}
+
+else_node* generate_else_node(block_node* block){
+  else_node* node = ALLOC(else_node,1);
+
+  node->block = block;
+
+  return node;
+}
+
+if_node* generate_if_node(exp_node* exp,block_node* block,else_node* else_n){
+  if_node* node = ALLOC(if_node,1);
+
+  node->exp = exp;
+  node->block = block;
+  node->else_n = else_n;
 
   return node;
 }

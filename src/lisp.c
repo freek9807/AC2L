@@ -273,6 +273,33 @@ void LISP_lisp_code_node(lisp_code_node* node){
   LISP_lisp_code_node(node->next);
 }
 
+void LISP_else_node(else_node* else_n){
+  if(else_n == NULL)
+    return ;
+
+  printf("%s"," ( " );
+  LISP_block_node(else_n->block);
+  printf("%s"," ) " );
+}
+
+void LISP_if_node(if_node* node){
+  if(node->else_n == NULL){
+    printf("%s"," when" );
+    LISP_exp_node(node->exp);
+    printf("%s"," ( " );
+    LISP_block_node(node->block);
+    printf("%s"," ) " );
+  }
+  else{
+    printf("%s"," if" );
+    LISP_exp_node(node->exp);
+    printf("%s"," ( " );
+    LISP_block_node(node->block);
+    printf("%s"," ) " );
+    LISP_else_node(node->else_n);
+  }
+}
+
 void LISP_block_operation(block_node* node){
   switch (node->type) {
     case BLOCK_ASSIGN:
@@ -287,6 +314,10 @@ void LISP_block_operation(block_node* node){
     }
     LISP_print_var_node(node->ass->var);
     LISP_exp_node(node->ass->assign->exp);
+    break;
+
+    case BLOCK_IF:
+      LISP_if_node(node->if_n);
     break;
 
   }
@@ -307,6 +338,7 @@ void LISP_block_node(block_node* node){
     }else{
           printf("%s"," progn " );
           printf("%s", " (" );
+          LISP_block_operation(node);
           printf("%s", " )" );
           printf("%s", " (" );
           LISP_block_node(node->next);

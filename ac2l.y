@@ -30,6 +30,8 @@ int yyerror (char* mensaje);
       as_ar_list_node* ar_ls;
       funcall_node* funcall;
       block_node* block;
+      if_node* if_n;
+      else_node* else_n;
       def_assign_node* assign_block;
       AST_node* ast;
 }
@@ -68,6 +70,8 @@ int yyerror (char* mensaje);
 %type <assign_block> assign_with_op
 %type <funcall> funcall
 %type <block> block
+%type <if_n> if_block
+%type <else_n> else_block
 %%
 
 principale  :   def lisp_code { $$ = generate_ast_node($1,$2); LISP_AST_node($$); }
@@ -101,8 +105,16 @@ assign_with_op : var PLUSVAL exp ';' { $$ = generate_reduce_def_assign(OP_PLUS,$
 
 block        : def_var block { $$ = generate_def_block_node($1,$2); }
              | assign_with_op block { $$ = generate_assign_block_node($1,$2); }
-             | var assign block { $$ = generate_assign_ext_block_node($1,$2,$3); }
+             | var assign ';' block { $$ = generate_assign_ext_block_node($1,$2,$4); }
+             | if_block block   { $$ = generate_if_block_node($1,$2); }
              | /* lambda */   { $$ = NULL; }
+             ;
+
+if_block     : IF '(' exp ')' '{' block '}' else_block { $$ = generate_if_node($3,$6,$8); }
+             ;
+
+else_block   : ELSE '{' block '}' { $$ = generate_else_node($3); }
+             | /* lambda */       { $$ = NULL; }
              ;
 
 assign_array : '{' array_content '}' { $$ = $2;  }
