@@ -145,6 +145,12 @@ void LISP_exp_node(exp_node* node){
       printf(" )");
     break;
 
+    case OP_PP:
+      printf(" (");
+      LISP_pre_post_inc_node(node->pp);
+      printf(" )");
+    break;
+
     default:
       printf(" (" );
       LISP_switch_op(node->type);

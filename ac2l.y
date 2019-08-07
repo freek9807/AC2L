@@ -176,6 +176,7 @@ exp          :     termine				{ $$ = generate_num_exp_node($1);  }
              | exp  NOTEQ exp   { $$ = generate_exp_node(OP_NOTEQ,$1,$3); }
              | exp '?' exp ':' exp { $$ = generate_ternary_exp_node($1 , $3, $5); }
              | '!' exp   { $$ = generate_not_exp_node($2); }
+             | pre_post_inc { }
              ;
 
 termine      :       operando				{ $$ = generate_termine_node('+' , $1); }

@@ -1,10 +1,11 @@
 #define ALLOC(t,n) (t *) malloc((n)*sizeof(t))
 #define generate_func_def_node(f,n) generate_def_node(DEF_FUNC,f,NULL,n)
 #define generate_def_var_def_node(v,n)  generate_def_node(DEF_VAR,NULL,v,n)
-#define generate_num_exp_node(term) generate_new_exp_node(OP_NUMERIC,term,NULL,NULL,NULL)
-#define generate_ternary_exp_node(term1,term2,term3) generate_new_exp_node(OP_TERNARY,NULL,term1,term2,term3)
-#define generate_not_exp_node(term1) generate_new_exp_node(OP_NOT,NULL,term1,NULL,NULL)
-#define generate_exp_node(type,term1,term2) generate_new_exp_node(type,NULL,term1,term2,NULL)
+#define generate_num_exp_node(term) generate_new_exp_node(OP_NUMERIC,term,NULL,NULL,NULL,NULL)
+#define generate_ternary_exp_node(term1,term2,term3) generate_new_exp_node(OP_TERNARY,NULL,term1,term2,term3,NULL)
+#define generate_not_exp_node(term1) generate_new_exp_node(OP_NOT,NULL,term1,NULL,NULL,NULL)
+#define generate_exp_node(type,term1,term2) generate_new_exp_node(type,NULL,term1,term2,NULL,NULL)
+#define generate_pp_exp_node(pp) generate_new_exp_node(OP_PP,NULL,NULL,NULL,NULL,pp)
 #define generate_num_operando_node(n) generate_operando_node(TERM_NUMBER,n,NULL,NULL,NULL)
 #define generate_exp_operando_node(e) generate_operando_node(TERM_EXP,0,e,NULL,NULL)
 #define generate_var_operando_node(v) generate_operando_node(TERM_VARIABLE,0,NULL,v,NULL)
@@ -75,7 +76,8 @@ typedef enum ExpType
   OP_EQ,
   OP_NOT,
   OP_TERNARY,
-  OP_NUMERIC
+  OP_NUMERIC,
+  OP_PP
 } EXP_Type;
 
 typedef enum {
@@ -161,6 +163,7 @@ typedef struct termine{
   char unary_sign;
   operando_node* op;
 } termine_node;
+typedef struct pre_post_inc pre_post_inc_node;
 //Nodo que definisce una espressione
 typedef struct exp{
   EXP_Type type;
@@ -168,6 +171,7 @@ typedef struct exp{
   struct exp* term1;
   struct exp* term2;
   struct exp* term3;
+  pre_post_inc_node* pp;
 } exp_node;
 
 typedef struct list_exp{
@@ -319,13 +323,14 @@ args_node* generate_args_node(var_node* var,args_node* next){
   return node;
 }
 // Genera un nuovo nodo exp vuoto
-exp_node* generate_new_exp_node(EXP_Type type,termine_node* term,exp_node* term1,exp_node* term2,exp_node* term3){
+exp_node* generate_new_exp_node(EXP_Type type,termine_node* term,exp_node* term1,exp_node* term2,exp_node* term3,pre_post_inc_node* pp){
   exp_node* exp = ALLOC(exp_node,1);
 
   exp->term = term;
   exp->term1 = term1;
   exp->term2 = term2;
   exp->term3 = term3;
+  exp->pp = pp;
   exp->type = type;
 
   return exp;
