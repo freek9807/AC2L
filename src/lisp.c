@@ -1,9 +1,14 @@
+//TODO: Aggiungere la stampa del return e dei loop
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 
 void LISP_operando_node(operando_node* node);
+void LISP_pre_post_inc_node(pre_post_inc_node* node);
+
+char* scope = NULL;
 
 void LISP_termine_node(termine_node* node){
   if(node->unary_sign == '-')  {
@@ -56,6 +61,12 @@ void LISP_operando_node(operando_node* node){
 
     case TERM_EXP:
       LISP_exp_node(node->exp);
+    break;
+
+    case TERM_PP:
+      printf(" (");
+      LISP_pre_post_inc_node(node->pp);
+      printf(" )");
     break;
   }
 }
@@ -145,12 +156,6 @@ void LISP_exp_node(exp_node* node){
       printf(" )");
     break;
 
-    case OP_PP:
-      printf(" (");
-      LISP_pre_post_inc_node(node->pp);
-      printf(" )");
-    break;
-
     default:
       printf(" (" );
       LISP_switch_op(node->type);
@@ -172,6 +177,7 @@ void LISP_args_node(args_node* args){
 void LISP_block_node(block_node* node);
 
 void LISP_func_node(func_node* node){
+  scope = strdup(node->id);
   printf("( defun %s", node->id );
   printf(" (" );
   LISP_args_node(node->args);
@@ -341,18 +347,28 @@ void LISP_pre_post_inc_node(pre_post_inc_node* node){
 void LISP_block_operation(block_node* node){
   switch (node->type) {
     case BLOCK_ASSIGN:
-    LISP_print_set_var(node->ass->var);
-    LISP_print_var_node(node->ass->var);
-    LISP_exp_node(node->ass->assign->exp);
+    LISP_print_set_var(((def_var_node*)node->node)->var);
+    LISP_print_var_node(((def_var_node*)node->node)->var);
+    LISP_exp_node(((def_var_node*)node->node)->assign->exp);
     break;
 
     case BLOCK_IF:
-      LISP_if_node(node->if_n);
+      LISP_if_node((if_node*) node->node);
     break;
 
     case BLOCK_PP:
-      LISP_pre_post_inc_node(node->pp);
+      LISP_pre_post_inc_node((pre_post_inc_node*) node->node);
     break;
+
+    case BLOCK_FUNCALL:
+      printf(" %s",((funcall_node*) node->node)->id );
+      LISP_base_list_exp(((funcall_node*) node->node)->ls_exp);
+    break;
+
+    case BLOCK_RETURN:
+      printf("return-from %s", scope );
+      LISP_exp_node(((return_node*) node->node)->exp);
+      break;
   }
 }
 
@@ -361,7 +377,7 @@ void LISP_block_node(block_node* node){
     if(node->type == BLOCK_DEF){
       printf("%s","  let ");
       printf("%s", " (" );
-      LISP_let_def_var_node(node->def);
+      LISP_let_def_var_node((def_var_node*) node->node);
       printf("%s", " )" );
       printf("%s", " (" );
       LISP_block_node(node->next);

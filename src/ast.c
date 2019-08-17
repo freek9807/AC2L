@@ -1,25 +1,30 @@
 #define ALLOC(t,n) (t *) malloc((n)*sizeof(t))
 #define generate_func_def_node(f,n) generate_def_node(DEF_FUNC,f,NULL,n)
 #define generate_def_var_def_node(v,n)  generate_def_node(DEF_VAR,NULL,v,n)
-#define generate_num_exp_node(term) generate_new_exp_node(OP_NUMERIC,term,NULL,NULL,NULL,NULL)
-#define generate_ternary_exp_node(term1,term2,term3) generate_new_exp_node(OP_TERNARY,NULL,term1,term2,term3,NULL)
-#define generate_not_exp_node(term1) generate_new_exp_node(OP_NOT,NULL,term1,NULL,NULL,NULL)
-#define generate_exp_node(type,term1,term2) generate_new_exp_node(type,NULL,term1,term2,NULL,NULL)
-#define generate_pp_exp_node(pp) generate_new_exp_node(OP_PP,NULL,NULL,NULL,NULL,pp)
-#define generate_num_operando_node(n) generate_operando_node(TERM_NUMBER,n,NULL,NULL,NULL)
-#define generate_exp_operando_node(e) generate_operando_node(TERM_EXP,0,e,NULL,NULL)
-#define generate_var_operando_node(v) generate_operando_node(TERM_VARIABLE,0,NULL,v,NULL)
-#define generate_func_operando_node(f) generate_operando_node(TERM_FUNCALL,0,NULL,NULL,f)
+#define generate_num_exp_node(term) generate_new_exp_node(OP_NUMERIC,term,NULL,NULL,NULL)
+#define generate_ternary_exp_node(term1,term2,term3) generate_new_exp_node(OP_TERNARY,NULL,term1,term2,term3)
+#define generate_not_exp_node(term1) generate_new_exp_node(OP_NOT,NULL,term1,NULL,NULL)
+#define generate_exp_node(type,term1,term2) generate_new_exp_node(type,NULL,term1,term2,NULL)
+#define generate_num_operando_node(n) generate_operando_node(TERM_NUMBER,n,NULL,NULL,NULL,NULL)
+#define generate_exp_operando_node(e) generate_operando_node(TERM_EXP,0,e,NULL,NULL,NULL)
+#define generate_var_operando_node(v) generate_operando_node(TERM_VARIABLE,0,NULL,v,NULL,NULL)
+#define generate_func_operando_node(f) generate_operando_node(TERM_FUNCALL,0,NULL,NULL,f,NULL)
+#define generate_pp_operando_node(pp) generate_operando_node(TERM_PP,0,NULL,NULL,NULL,pp)
 #define generate_exp_assign_node(e) generate_assign_node(ASS_VAR,e,NULL)
 #define generate_array_assign_node(a) generate_assign_node(ASS_ARRAY,NULL,a)
 #define generate_ls_exp_array(e) generate_array_content_node(NULL,e)
 #define generate_ls_matrix_array(c) generate_array_content_node(c,NULL)
 #define generate_reduce_def_assign(o,v,e) generate_def_assign_node(v,generate_exp_assign_node(generate_exp_node(o,generate_num_exp_node(generate_termine_node('+' , generate_var_operando_node(v))),e)))
-#define generate_def_block_node(d,n) generate_block_node(BLOCK_DEF,d,NULL,NULL,NULL,n)
-#define generate_assign_block_node(a,n) generate_block_node(BLOCK_ASSIGN,NULL,a,NULL,NULL,n)
-#define generate_assign_ext_block_node(v,a,n) generate_block_node(BLOCK_ASSIGN,NULL,generate_def_assign_node(v,a),NULL,NULL,n)
-#define generate_if_block_node(i,n) generate_block_node(BLOCK_IF,NULL,NULL,i,NULL,n)
-#define generate_pre_post_block_node(e,n) generate_block_node(BLOCK_PP,NULL,NULL,NULL,e,n)
+#define generate_def_block_node(d,n) generate_block_node(BLOCK_DEF,d,n)
+#define generate_assign_block_node(a,n) generate_block_node(BLOCK_ASSIGN,a,n)
+#define generate_assign_ext_block_node(v,a,n) generate_block_node(BLOCK_ASSIGN,generate_def_assign_node(v,a),n)
+#define generate_if_block_node(i,n) generate_block_node(BLOCK_IF,i,n)
+#define generate_pre_post_block_node(e,n) generate_block_node(BLOCK_PP,e,n)
+#define generate_funcall_block_node(f,n)  generate_block_node(BLOCK_FUNCALL,f,n)
+#define generate_loop_block_node(l,n) generate_block_node(BLOCK_LOOP,l,n)
+#define generate_return_block_node(e,n) generate_block_node(BLOCK_RETURN,generate_return_node(e),n)
+#define generate_while_node(e,b) generate_loop_node(LOOP_WHILE,e,b,NULL,NULL,NULL,NULL)
+#define generate_do_while_node(e,b) generate_loop_node(LOOP_DO_WHILE,e,b,NULL,NULL,NULL,NULL)
 
 #include <stdio.h>
 #include <string.h>
@@ -56,6 +61,14 @@ typedef enum {
   PLUS,
   MINUS
 } OPERATION_TYPE;
+
+typedef enum {
+  LOOP_FOR,
+  LOOP_FOR_PP,
+  LOOP_FOR_AWO,
+  LOOP_WHILE,
+  LOOP_DO_WHILE
+} LOOP_TYPE;
 //Tipo di operatore
 typedef enum ExpType
 {
@@ -76,15 +89,17 @@ typedef enum ExpType
   OP_EQ,
   OP_NOT,
   OP_TERNARY,
-  OP_NUMERIC,
-  OP_PP
+  OP_NUMERIC
 } EXP_Type;
 
 typedef enum {
   BLOCK_DEF,
   BLOCK_ASSIGN,
   BLOCK_IF,
-  BLOCK_PP
+  BLOCK_PP,
+  BLOCK_FUNCALL,
+  BLOCK_LOOP,
+  BLOCK_RETURN
 } BLOCK_TYPE;
 // Tipo di termine
 typedef enum TermineType
@@ -92,7 +107,8 @@ typedef enum TermineType
   TERM_NUMBER,
   TERM_EXP,
   TERM_FUNCALL,
-  TERM_VARIABLE
+  TERM_VARIABLE,
+  TERM_PP
 } TERM_TYPE;
 // Defizione nodo array o matrice
 typedef struct array{
@@ -150,6 +166,8 @@ typedef struct principale{
 typedef struct exp exp_node;
 
 typedef struct funcall funcall_node;
+
+typedef struct pre_post_inc pre_post_inc_node;
 // Nodo che definisce un operatore
 typedef struct operando{
   int num;
@@ -157,13 +175,13 @@ typedef struct operando{
   TERM_TYPE type;
   var_node* var;
   funcall_node* func;
+  pre_post_inc_node* pp;
 } operando_node;
 // Nodo che definisce un termine
 typedef struct termine{
   char unary_sign;
   operando_node* op;
 } termine_node;
-typedef struct pre_post_inc pre_post_inc_node;
 //Nodo que definisce una espressione
 typedef struct exp{
   EXP_Type type;
@@ -171,7 +189,6 @@ typedef struct exp{
   struct exp* term1;
   struct exp* term2;
   struct exp* term3;
-  pre_post_inc_node* pp;
 } exp_node;
 
 typedef struct list_exp{
@@ -212,10 +229,7 @@ typedef struct pre_post_inc{
 
 typedef struct block{
   BLOCK_TYPE type;
-  def_var_node* def;
-  def_assign_node* ass;
-  if_node* if_n;
-  pre_post_inc_node* pp;
+  void* node;
   struct block* next;
 } block_node;
 
@@ -228,6 +242,20 @@ typedef struct if_block{
   block_node* block;
   else_node* else_n;
 } if_node;
+
+typedef struct loop{
+  LOOP_TYPE type;
+  exp_node* exp;
+  block_node* block;
+  def_var_node* def;
+  var_node* var;
+  def_assign_node* ass;
+  pre_post_inc_node* pp;
+} loop_node;
+
+typedef struct return_g{
+  exp_node* exp;
+} return_node;
 // Funzione che restituisce un nodo di tipo array
 array_node* generate_array_node(int info, array_node* next){
   array_node* node = ALLOC(array_node,1);
@@ -323,14 +351,13 @@ args_node* generate_args_node(var_node* var,args_node* next){
   return node;
 }
 // Genera un nuovo nodo exp vuoto
-exp_node* generate_new_exp_node(EXP_Type type,termine_node* term,exp_node* term1,exp_node* term2,exp_node* term3,pre_post_inc_node* pp){
+exp_node* generate_new_exp_node(EXP_Type type,termine_node* term,exp_node* term1,exp_node* term2,exp_node* term3){
   exp_node* exp = ALLOC(exp_node,1);
 
   exp->term = term;
   exp->term1 = term1;
   exp->term2 = term2;
   exp->term3 = term3;
-  exp->pp = pp;
   exp->type = type;
 
   return exp;
@@ -346,7 +373,7 @@ assign_node* generate_assign_node(ASS_TYPE type,exp_node* exp,array_content_node
   return node;
 }
 // Genera un nodo operando
-operando_node* generate_operando_node(TERM_TYPE type,int num,exp_node* exp,var_node* var,funcall_node* func){
+operando_node* generate_operando_node(TERM_TYPE type,int num,exp_node* exp,var_node* var,funcall_node* func,pre_post_inc_node* pp){
   operando_node* node = ALLOC(operando_node,1);
 
   node->type = type;
@@ -354,6 +381,7 @@ operando_node* generate_operando_node(TERM_TYPE type,int num,exp_node* exp,var_n
   node->exp = exp;
   node->var = var;
   node->func = func;
+  node->pp = pp;
 
   return node;
 }
@@ -414,16 +442,12 @@ pre_post_inc_node* generate_pre_post_inc_node(PRIORITY_TYPE p_type,char sign,var
   return node;
 }
 
-block_node* generate_block_node(BLOCK_TYPE type,def_var_node* def, def_assign_node* ass, if_node* if_n,pre_post_inc_node* pp, block_node* next){
+block_node* generate_block_node(BLOCK_TYPE type,void* p, block_node* next){
   block_node* node = ALLOC(block_node,1);
 
   node->type = type;
-  node->def = def;
-  node->ass = ass;
-  node->if_n = if_n;
-  node->pp = pp;
+  node->node = p;
   node->next = next;
-
   return node;
 }
 
@@ -441,6 +465,28 @@ if_node* generate_if_node(exp_node* exp,block_node* block,else_node* else_n){
   node->exp = exp;
   node->block = block;
   node->else_n = else_n;
+
+  return node;
+}
+
+loop_node* generate_loop_node(LOOP_TYPE type,exp_node* exp,block_node* block,def_var_node* def,var_node* var,def_assign_node* ass,pre_post_inc_node* pp){
+  loop_node* node = ALLOC(loop_node,1);
+
+  node->type = type;
+  node->exp = exp;
+  node->block = block;
+  node->def = def;
+  node->ass = ass;
+  node->var = var;
+  node->pp = pp;
+
+  return node;
+}
+
+return_node* generate_return_node(exp_node* exp){
+  return_node* node = ALLOC(return_node,1);
+
+  node->exp = exp;
 
   return node;
 }

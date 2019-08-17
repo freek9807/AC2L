@@ -42,7 +42,8 @@ int yyparse();
 "-="            { return(MINUSVAL); }
 "*="            { return(MULTVAL); }
 "/="            { return(DIVVAL); }
-[ \t\v\n\f\r]		{ n_linea++; }
+[ \t\v\f\r]		  { ; }
+[\n]            { n_linea++; }
 \#(.*)          { n_linea++; }
 \/\/@(.*)       {
                   n_linea++;
