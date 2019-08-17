@@ -30,7 +30,11 @@ int yyerror (char* mensaje);
       as_ar_list_node* ar_ls;
       funcall_node* funcall;
       block_node* block;
+      if_node* if_n;
+      else_node* else_n;
       def_assign_node* assign_block;
+      pre_post_inc_node* pp;
+      loop_node* loop;
       AST_node* ast;
 }
 
@@ -68,6 +72,10 @@ int yyerror (char* mensaje);
 %type <assign_block> assign_with_op
 %type <funcall> funcall
 %type <block> block
+%type <if_n> if_block
+%type <else_n> else_block
+%type <pp> pre_post_inc
+%type <loop> loop
 %%
 
 principale  :   def lisp_code { $$ = generate_ast_node($1,$2); LISP_AST_node($$); }
@@ -93,16 +101,41 @@ assign       : '=' exp     { $$ = generate_exp_assign_node($2); }
             | /* lambda */ { $$ = NULL; }
              ;
 
-assign_with_op : var PLUSVAL exp ';' { $$ = generate_reduce_def_assign(OP_PLUS,$1,$3); }
-                | var MULTVAL exp ';' { $$ = generate_reduce_def_assign(OP_MINUS,$1,$3); }
-                | var MINUSVAL exp ';' { $$ = generate_reduce_def_assign(OP_MULT,$1,$3); }
-                | var DIVVAL exp ';' { $$ = generate_reduce_def_assign(OP_DIV,$1,$3); }
+assign_with_op : var PLUSVAL exp  { $$ = generate_reduce_def_assign(OP_PLUS,$1,$3); }
+                | var MULTVAL exp  { $$ = generate_reduce_def_assign(OP_MINUS,$1,$3); }
+                | var MINUSVAL exp  { $$ = generate_reduce_def_assign(OP_MULT,$1,$3); }
+                | var DIVVAL exp  { $$ = generate_reduce_def_assign(OP_DIV,$1,$3); }
                 ;
 
 block        : def_var block { $$ = generate_def_block_node($1,$2); }
-             | assign_with_op block { $$ = generate_assign_block_node($1,$2); }
-             | var assign block { $$ = generate_assign_ext_block_node($1,$2,$3); }
+             | assign_with_op ';' block { $$ = generate_assign_block_node($1,$3); }
+             |   var assign ';' block { $$ = generate_assign_ext_block_node($1,$2,$4); }
+             |   if_block block   { $$ = generate_if_block_node($1,$2); }
+             |   pre_post_inc ';' block { $$ = generate_pre_post_block_node($1,$3); }
+             |   funcall ';' block { $$ = generate_funcall_block_node($1,$3); }
+             |   loop block { $$ = generate_loop_block_node($1,$2); }
+             |   RETURN exp ';' block { $$ = generate_return_block_node($2,$4); }
              | /* lambda */   { $$ = NULL; }
+             ;
+
+loop         : WHILE '(' exp ')' '{' block '}' { $$ = generate_while_node($3,$6); }
+              | DO '{' block '}' WHILE '(' exp ')' ';' { $$ = generate_do_while_node($7,$3); }
+              | FOR '('def_var exp ';' var assign ')' '{' block '}' { $$ = NULL; }
+              | FOR '('def_var exp ';' assign_with_op ')' '{' block '}' { $$ = NULL; }
+              | FOR '('def_var exp ';' pre_post_inc ')' '{' block '}' { $$ = NULL; }
+              ;
+
+pre_post_inc : var INC  { $$ = generate_pre_post_inc_node(POST,'+',$1); }
+              | var DEC { $$ = generate_pre_post_inc_node(POST,'-',$1); }
+              | INC var { $$ = generate_pre_post_inc_node(PRE,'+',$2); }
+              | DEC var { $$ = generate_pre_post_inc_node(PRE,'-',$2); }
+              ;
+
+if_block     : IF '(' exp ')' '{' block '}' else_block { $$ = generate_if_node($3,$6,$8); }
+             ;
+
+else_block   : ELSE '{' block '}' { $$ = generate_else_node($3); }
+             | /* lambda */       { $$ = NULL; }
              ;
 
 assign_array : '{' array_content '}' { $$ = $2;  }
@@ -166,6 +199,7 @@ operando     :      NUMBER 			        { $$ = generate_num_operando_node($1); }
              | '(' exp ')'		{ $$ = generate_exp_operando_node($2); }
              |  var           { $$ = generate_var_operando_node($1); }
              |  funcall       { $$ = generate_func_operando_node($1); }
+             | pre_post_inc   { $$ = generate_pp_operando_node($1); }
              ;
 
 funcall      : IDENTIF '(' base_list_exp ')' { $$ = generate_funcall_node($1,$3); }

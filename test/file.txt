@@ -1,6 +1,0 @@
-int prova(int a,int b){
-int c = 2;
-c += a  + b;
-}
-
-//@ (write (prova 2 3))

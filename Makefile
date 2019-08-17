@@ -1,7 +1,6 @@
 # Impostazioni varie
 CC=gcc
 CFLAG=-ll -ly -o
-LEXFLAG=-ll
 LEXER=flex
 PARSER=bison
 CLISP=sbcl
@@ -33,12 +32,12 @@ ac2l:
 out:
 	mkdir -p out
 	$(call generate_files)
-	./ac2l < test/$(FILE).txt > out/$(OUTPUT).txt
+	./ac2l < test/$(FILE).c > out/$(OUTPUT).lisp
 #  Prende un file in input e lo esegue in LISP
 .PHONY: tol
 tol:
 	$(call generate_files)
-	./ac2l < test/$(FILE).txt | $(CLISP)
+	./ac2l < test/$(FILE).c | $(CLISP)
 .PHONY: clean
 clean:
 	rm -r ac2l.tab.h ac2l.tab.c lex.yy.c ac2l

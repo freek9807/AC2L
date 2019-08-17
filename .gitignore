@@ -55,5 +55,3 @@ ac2l
 ac2l.tab.c
 ac2l.tab.h
 lex.yy.c
-
-out/

@@ -42,7 +42,8 @@ int yyparse();
 "-="            { return(MINUSVAL); }
 "*="            { return(MULTVAL); }
 "/="            { return(DIVVAL); }
-[ \t\v\n\f\r]		{ ; }
+[ \t\v\f\r]		  { ; }
+[\n]            { n_linea++; }
 \#(.*)          { n_linea++; }
 \/\/@(.*)       {
                   n_linea++;
@@ -52,6 +53,7 @@ int yyparse();
                 }
 \/\/(.*)        { n_linea++; }
 \".*\"          {
+                  n_linea++;
                   yylval.string = ALLOC(char , STR_SIZE(yytext-2));
                   strncpy(yylval.string, &yytext[1], strlen(yytext)-2);
                   return (STRING) ;

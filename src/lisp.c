@@ -1,9 +1,14 @@
+//TODO: Aggiungere la stampa del return e dei loop
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 
 void LISP_operando_node(operando_node* node);
+void LISP_pre_post_inc_node(pre_post_inc_node* node);
+
+char* scope = NULL;
 
 void LISP_termine_node(termine_node* node){
   if(node->unary_sign == '-')  {
@@ -56,6 +61,12 @@ void LISP_operando_node(operando_node* node){
 
     case TERM_EXP:
       LISP_exp_node(node->exp);
+    break;
+
+    case TERM_PP:
+      printf(" (");
+      LISP_pre_post_inc_node(node->pp);
+      printf(" )");
     break;
   }
 }
@@ -166,13 +177,14 @@ void LISP_args_node(args_node* args){
 void LISP_block_node(block_node* node);
 
 void LISP_func_node(func_node* node){
+  scope = strdup(node->id);
   printf("( defun %s", node->id );
   printf(" (" );
   LISP_args_node(node->args);
   printf(" )");
-  printf(" (" );
+  printf("%s", " (" );
   LISP_block_node(node->block);
-  printf(" )");
+  printf("%s", " )" );
   printf(" )\n" );
 }
 
@@ -273,22 +285,90 @@ void LISP_lisp_code_node(lisp_code_node* node){
   LISP_lisp_code_node(node->next);
 }
 
+void LISP_else_node(else_node* else_n){
+  if(else_n == NULL)
+    return ;
+
+  printf("%s"," ( " );
+  LISP_block_node(else_n->block);
+  printf("%s"," ) " );
+}
+
+void LISP_if_node(if_node* node){
+  if(node->else_n == NULL){
+    printf("%s"," when" );
+    LISP_exp_node(node->exp);
+    printf("%s"," ( " );
+    LISP_block_node(node->block);
+    printf("%s"," ) " );
+  }
+  else{
+    printf("%s"," if" );
+    LISP_exp_node(node->exp);
+    printf("%s"," ( " );
+    LISP_block_node(node->block);
+    printf("%s"," ) " );
+    LISP_else_node(node->else_n);
+  }
+}
+
+void LISP_print_set_var(var_node* node) {
+  switch (node->type) {
+    case VAR_INT:
+      printf("%s", " setq" );
+    break;
+
+    case VAR_ARRAY:
+    printf("%s", " setf" );
+    break;
+  }
+}
+
+void LISP_pre_post_inc_node(pre_post_inc_node* node){
+  switch (node->p_type) {
+    case POST:
+      printf(" prog1" );
+    break;
+
+    case PRE:
+      printf(" prog2" );
+    break;
+  }
+  LISP_print_var_node(node->var);
+  printf(" (" );
+  LISP_print_set_var(node->var);
+  LISP_print_var_node(node->var);
+  printf("%s %c", " (",node->sign);
+  LISP_print_var_node(node->var);
+  printf("%s", " 1 )");
+  printf(" )" );
+}
+
 void LISP_block_operation(block_node* node){
   switch (node->type) {
     case BLOCK_ASSIGN:
-    switch (node->ass->var->type) {
-      case VAR_INT:
-        printf("%s", " setq" );
-      break;
-
-      case VAR_ARRAY:
-      printf("%s", " setf" );
-      break;
-    }
-    LISP_print_var_node(node->ass->var);
-    LISP_exp_node(node->ass->assign->exp);
+    LISP_print_set_var(((def_var_node*)node->node)->var);
+    LISP_print_var_node(((def_var_node*)node->node)->var);
+    LISP_exp_node(((def_var_node*)node->node)->assign->exp);
     break;
 
+    case BLOCK_IF:
+      LISP_if_node((if_node*) node->node);
+    break;
+
+    case BLOCK_PP:
+      LISP_pre_post_inc_node((pre_post_inc_node*) node->node);
+    break;
+
+    case BLOCK_FUNCALL:
+      printf(" %s",((funcall_node*) node->node)->id );
+      LISP_base_list_exp(((funcall_node*) node->node)->ls_exp);
+    break;
+
+    case BLOCK_RETURN:
+      printf("return-from %s", scope );
+      LISP_exp_node(((return_node*) node->node)->exp);
+      break;
   }
 }
 
@@ -297,7 +377,7 @@ void LISP_block_node(block_node* node){
     if(node->type == BLOCK_DEF){
       printf("%s","  let ");
       printf("%s", " (" );
-      LISP_let_def_var_node(node->def);
+      LISP_let_def_var_node((def_var_node*) node->node);
       printf("%s", " )" );
       printf("%s", " (" );
       LISP_block_node(node->next);
@@ -305,8 +385,9 @@ void LISP_block_node(block_node* node){
     } else if(node->next == NULL){
       LISP_block_operation(node);
     }else{
-          printf("%s"," progn " );
+          printf("%s","  progn " );
           printf("%s", " (" );
+          LISP_block_operation(node);
           printf("%s", " )" );
           printf("%s", " (" );
           LISP_block_node(node->next);
