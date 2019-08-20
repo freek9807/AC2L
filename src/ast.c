@@ -23,6 +23,8 @@
 #define generate_funcall_block_node(f,n)  generate_block_node(BLOCK_FUNCALL,f,n)
 #define generate_loop_block_node(l,n) generate_block_node(BLOCK_LOOP,l,n)
 #define generate_return_block_node(e,n) generate_block_node(BLOCK_RETURN,generate_return_node(e),n)
+#define generate_input_block_node(i,n) generate_block_node(BLOCK_INPUT,i,n)
+#define generate_output_block_node(o,n) generate_block_node(BLOCK_OUTPUT,o,n)
 #define generate_while_node(e,b) generate_loop_node(LOOP_WHILE,e,b,NULL,NULL,NULL,NULL)
 #define generate_do_while_node(e,b) generate_loop_node(LOOP_DO_WHILE,e,b,NULL,NULL,NULL,NULL)
 
@@ -99,8 +101,12 @@ typedef enum {
   BLOCK_PP,
   BLOCK_FUNCALL,
   BLOCK_LOOP,
-  BLOCK_RETURN
+  BLOCK_RETURN,
+  BLOCK_INPUT,
+  BLOCK_OUTPUT
 } BLOCK_TYPE;
+
+typedef struct exp exp_node;
 // Tipo di termine
 typedef enum TermineType
 {
@@ -112,7 +118,7 @@ typedef enum TermineType
 } TERM_TYPE;
 // Defizione nodo array o matrice
 typedef struct array{
-  int dim;
+  exp_node* dim;
   struct array* next;
 } array_node;
 //
@@ -163,7 +169,6 @@ typedef struct principale{
   def_node* def;
   lisp_code_node* lisp;
 } AST_node;
-typedef struct exp exp_node;
 
 typedef struct funcall funcall_node;
 
@@ -256,11 +261,25 @@ typedef struct loop{
 typedef struct return_g{
   exp_node* exp;
 } return_node;
+
+typedef struct var_list{
+  var_node* var;
+  struct var_list* next;
+} var_list_node;
+
+typedef struct scan{
+  var_list_node* ls;
+} input_node;
+
+typedef struct print{
+  char* string;
+  list_exp_node* exp_ls;
+} output_node;
 // Funzione che restituisce un nodo di tipo array
-array_node* generate_array_node(int info, array_node* next){
+array_node* generate_array_node(exp_node* exp, array_node* next){
   array_node* node = ALLOC(array_node,1);
 
-  node->dim = info;
+  node->dim = exp;
   node->next = next;
 
   return node;
@@ -487,6 +506,32 @@ return_node* generate_return_node(exp_node* exp){
   return_node* node = ALLOC(return_node,1);
 
   node->exp = exp;
+
+  return node;
+}
+
+var_list_node* generate_var_list(var_node* var,var_list_node* next){
+  var_list_node* node = ALLOC(var_list_node,1);
+
+  node->var = var;
+  node->next = next;
+
+  return node;
+}
+
+input_node* generate_input_node(var_list_node* ls){
+  input_node* node = ALLOC(input_node,1);
+
+  node->ls = ls;
+
+  return node;
+}
+
+output_node* generate_output_node(char* string,list_exp_node* ls){
+  output_node* node = ALLOC(output_node,1);
+
+  node->string = strdup(string);
+  node->exp_ls = ls;
 
   return node;
 }
