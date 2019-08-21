@@ -1,7 +1,6 @@
 # Impostazioni varie
 CC=gcc
 CFLAG=-ll -ly -o
-LEXFLAG=-ll
 LEXER=flex
 PARSER=bison
 CLISP=sbcl
@@ -22,7 +21,7 @@ endef
 # Compila i file FLEX/BISON e permette di inserire codice da bash
 main:
 	$(call generate_files)
-	valgrind ./ac2l
+	./ac2l
 # Esegue il codice scitto da bash in LISP
 .PHONY: ac2l
 ac2l:
@@ -33,12 +32,16 @@ ac2l:
 out:
 	mkdir -p out
 	$(call generate_files)
-	./ac2l < test/$(FILE).txt > out/$(OUTPUT).txt
+	./ac2l < test/$(FILE).c > out/$(OUTPUT).lisp
 #  Prende un file in input e lo esegue in LISP
 .PHONY: tol
 tol:
 	$(call generate_files)
-	./ac2l < test/$(FILE).txt | $(CLISP)
+	./ac2l < test/$(FILE).c | $(CLISP)
 .PHONY: clean
 clean:
 	rm -r ac2l.tab.h ac2l.tab.c lex.yy.c ac2l
+.PHONY: test
+	test:
+		$(call generate_files)
+		valgrind ./ac2l

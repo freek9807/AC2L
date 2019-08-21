@@ -27,6 +27,7 @@ int yyparse();
 "do"            { return(DO); }
 "for"           { return(FOR); }
 "printf"        { return(PRINT); }
+"scanf"         { return(SCAN); }
 "puts"          { return(PUTS); }
 "return"        { return(RETURN); }
 "void"          { return(VOID); }
@@ -38,11 +39,12 @@ int yyparse();
 "<="            { return(LESS_EQ); }
 "=="            { return(EQ); }
 "!="            { return(NOTEQ); }
-"+="            { return(PLUSONE); }
-"-="            { return(MINUSONE); }
-"*="            { return(MULTONE); }
-"/="            { return(DIVONE); }
-[ \t\v\n\f\r]		{ ; }
+"+="            { return(PLUSVAL); }
+"-="            { return(MINUSVAL); }
+"*="            { return(MULTVAL); }
+"/="            { return(DIVVAL); }
+[ \t\v\f\r]		  { ; }
+[\n]            { n_linea++; }
 \#(.*)          { n_linea++; }
 \/\/@(.*)       {
                   n_linea++;
@@ -52,6 +54,7 @@ int yyparse();
                 }
 \/\/(.*)        { n_linea++; }
 \".*\"          {
+                  n_linea++;
                   yylval.string = ALLOC(char , STR_SIZE(yytext-2));
                   strncpy(yylval.string, &yytext[1], strlen(yytext)-2);
                   return (STRING) ;

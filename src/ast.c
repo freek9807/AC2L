@@ -5,14 +5,31 @@
 #define generate_ternary_exp_node(term1,term2,term3) generate_new_exp_node(OP_TERNARY,NULL,term1,term2,term3)
 #define generate_not_exp_node(term1) generate_new_exp_node(OP_NOT,NULL,term1,NULL,NULL)
 #define generate_exp_node(type,term1,term2) generate_new_exp_node(type,NULL,term1,term2,NULL)
-#define generate_num_operando_node(n) generate_operando_node(TERM_NUMBER,n,NULL,NULL,NULL)
-#define generate_exp_operando_node(e) generate_operando_node(TERM_EXP,0,e,NULL,NULL)
-#define generate_var_operando_node(v) generate_operando_node(TERM_VARIABLE,0,NULL,v,NULL)
-#define generate_func_operando_node(f) generate_operando_node(TERM_FUNCALL,0,NULL,NULL,f)
+#define generate_num_operando_node(n) generate_operando_node(TERM_NUMBER,n,NULL,NULL,NULL,NULL)
+#define generate_exp_operando_node(e) generate_operando_node(TERM_EXP,0,e,NULL,NULL,NULL)
+#define generate_var_operando_node(v) generate_operando_node(TERM_VARIABLE,0,NULL,v,NULL,NULL)
+#define generate_func_operando_node(f) generate_operando_node(TERM_FUNCALL,0,NULL,NULL,f,NULL)
+#define generate_pp_operando_node(pp) generate_operando_node(TERM_PP,0,NULL,NULL,NULL,pp)
 #define generate_exp_assign_node(e) generate_assign_node(ASS_VAR,e,NULL)
 #define generate_array_assign_node(a) generate_assign_node(ASS_ARRAY,NULL,a)
 #define generate_ls_exp_array(e) generate_array_content_node(NULL,e)
 #define generate_ls_matrix_array(c) generate_array_content_node(c,NULL)
+#define generate_reduce_def_assign(o,v,e) generate_def_assign_node(v,generate_exp_assign_node(generate_exp_node(o,generate_num_exp_node(generate_termine_node('+' , generate_var_operando_node(v))),e)))
+#define generate_def_block_node(d,n) generate_block_node(BLOCK_DEF,d,n)
+#define generate_assign_block_node(a,n) generate_block_node(BLOCK_ASSIGN,a,n)
+#define generate_assign_ext_block_node(v,a,n) generate_block_node(BLOCK_ASSIGN,generate_def_assign_node(v,a),n)
+#define generate_if_block_node(i,n) generate_block_node(BLOCK_IF,i,n)
+#define generate_pre_post_block_node(e,n) generate_block_node(BLOCK_PP,e,n)
+#define generate_funcall_block_node(f,n)  generate_block_node(BLOCK_FUNCALL,f,n)
+#define generate_loop_block_node(l,n) generate_block_node(BLOCK_LOOP,l,n)
+#define generate_return_block_node(e,n) generate_block_node(BLOCK_RETURN,generate_return_node(e),n)
+#define generate_input_block_node(i,n) generate_block_node(BLOCK_INPUT,i,n)
+#define generate_output_block_node(o,n) generate_block_node(BLOCK_OUTPUT,o,n)
+#define generate_while_node(e,b) generate_loop_node(LOOP_WHILE,USELESS,e,b,NULL,NULL,NULL,NULL,NULL)
+#define generate_do_while_node(e,b) generate_loop_node(LOOP_DO_WHILE,USELESS,e,b,NULL,NULL,NULL,NULL,NULL)
+#define generate_for_var_assign(d,e,v,a,b) generate_loop_node(LOOP_FOR,FOR_N,e,b,d,v,NULL,a,NULL)
+#define generate_for_awo(d,e,a,b) generate_loop_node(LOOP_FOR,FOR_AWO,e,b,d,NULL,a,NULL,NULL)
+#define generate_for_pp(d,e,pp,b) generate_loop_node(LOOP_FOR,FOR_PP,e,b,d,NULL,NULL,NULL,pp)
 
 #include <stdio.h>
 #include <string.h>
@@ -39,6 +56,29 @@ typedef enum {
   ASS_VAR,
   ASS_ARRAY
 } ASS_TYPE;
+
+typedef enum {
+  PRE,
+  POST
+} PRIORITY_TYPE;
+
+typedef enum {
+  PLUS,
+  MINUS
+} OPERATION_TYPE;
+
+typedef enum {
+  LOOP_FOR,
+  LOOP_WHILE,
+  LOOP_DO_WHILE
+} LOOP_TYPE;
+
+typedef enum {
+  USELESS,
+  FOR_N,
+  FOR_AWO,
+  FOR_PP
+} FOR_TYPE;
 //Tipo di operatore
 typedef enum ExpType
 {
@@ -61,17 +101,32 @@ typedef enum ExpType
   OP_TERNARY,
   OP_NUMERIC
 } EXP_Type;
+
+typedef enum {
+  BLOCK_DEF,
+  BLOCK_ASSIGN,
+  BLOCK_IF,
+  BLOCK_PP,
+  BLOCK_FUNCALL,
+  BLOCK_LOOP,
+  BLOCK_RETURN,
+  BLOCK_INPUT,
+  BLOCK_OUTPUT
+} BLOCK_TYPE;
+
+typedef struct exp exp_node;
 // Tipo di termine
 typedef enum TermineType
 {
   TERM_NUMBER,
   TERM_EXP,
   TERM_FUNCALL,
-  TERM_VARIABLE
+  TERM_VARIABLE,
+  TERM_PP
 } TERM_TYPE;
 // Defizione nodo array o matrice
 typedef struct array{
-  int dim;
+  exp_node* dim;
   struct array* next;
 } array_node;
 //
@@ -87,16 +142,23 @@ typedef struct def_var{
   var_node* var;
   assign_node* assign;
 } def_var_node;
+// Definzione della struttura del nodo variabile
+typedef struct def_assign{
+  var_node* var;
+  assign_node* assign;
+} def_assign_node;
 // Definzione di una lista di argomenti di funzione
 typedef struct args{
   var_node* var;
   struct args* next;
 } args_node;
+typedef struct block block_node;
 //Definizione del nodo funzione
 typedef struct func{
   char* id;
   FUNC_TYPE type;
   args_node* args;
+  block_node* block;
 } func_node;
 // Definzione del nodo definizione
 typedef struct def{
@@ -115,9 +177,10 @@ typedef struct principale{
   def_node* def;
   lisp_code_node* lisp;
 } AST_node;
-typedef struct exp exp_node;
 
 typedef struct funcall funcall_node;
+
+typedef struct pre_post_inc pre_post_inc_node;
 // Nodo che definisce un operatore
 typedef struct operando{
   int num;
@@ -125,6 +188,7 @@ typedef struct operando{
   TERM_TYPE type;
   var_node* var;
   funcall_node* func;
+  pre_post_inc_node* pp;
 } operando_node;
 // Nodo che definisce un termine
 typedef struct termine{
@@ -167,11 +231,65 @@ typedef struct funcall{
   char* id;
   list_exp_node* ls_exp;
 } funcall_node;
+
+typedef struct if_block if_node;
+
+typedef struct pre_post_inc{
+  PRIORITY_TYPE p_type;
+  char sign;
+  var_node* var;
+} pre_post_inc_node;
+
+typedef struct block{
+  BLOCK_TYPE type;
+  void* node;
+  struct block* next;
+} block_node;
+
+typedef struct else_block{
+  block_node* block;
+} else_node;
+
+typedef struct if_block{
+  exp_node* exp;
+  block_node* block;
+  else_node* else_n;
+} if_node;
+
+typedef struct loop{
+  LOOP_TYPE type;
+  FOR_TYPE for_type;
+  exp_node* exp;
+  block_node* block;
+  def_var_node* def;
+  var_node* var;
+  def_assign_node* ass;
+  assign_node* a;
+  pre_post_inc_node* pp;
+} loop_node;
+
+typedef struct return_g{
+  exp_node* exp;
+} return_node;
+
+typedef struct var_list{
+  var_node* var;
+  struct var_list* next;
+} var_list_node;
+
+typedef struct scan{
+  var_list_node* ls;
+} input_node;
+
+typedef struct print{
+  char* string;
+  list_exp_node* exp_ls;
+} output_node;
 // Funzione che restituisce un nodo di tipo array
-array_node* generate_array_node(int info, array_node* next){
+array_node* generate_array_node(exp_node* exp, array_node* next){
   array_node* node = ALLOC(array_node,1);
 
-  node->dim = info;
+  node->dim = exp;
   node->next = next;
 
   return node;
@@ -196,13 +314,25 @@ def_var_node* generate_def_var_node(var_node* var,assign_node* assign){
   return def_var;
 
 }
+// Funzione che restituisce un nodo con definizione di variabile
+def_assign_node* generate_def_assign_node(var_node* var,assign_node* assign){
+
+  def_assign_node* def_assign = ALLOC(def_assign_node,1);
+
+  def_assign->var = var;
+  def_assign->assign = assign;
+
+  return def_assign;
+
+}
 // Funzione che restituisce un nodo di funzione
-func_node* generate_func_node(FUNC_TYPE type,char* id,args_node* args){
+func_node* generate_func_node(FUNC_TYPE type,char* id,block_node* block,args_node* args){
 
   func_node* func = ALLOC(func_node,1);
 
   func->id = strdup(id);
   func->type = type;
+  func->block = block;
   func->args = args;
 
   return func;
@@ -272,7 +402,7 @@ assign_node* generate_assign_node(ASS_TYPE type,exp_node* exp,array_content_node
   return node;
 }
 // Genera un nodo operando
-operando_node* generate_operando_node(TERM_TYPE type,int num,exp_node* exp,var_node* var,funcall_node* func){
+operando_node* generate_operando_node(TERM_TYPE type,int num,exp_node* exp,var_node* var,funcall_node* func,pre_post_inc_node* pp){
   operando_node* node = ALLOC(operando_node,1);
 
   node->type = type;
@@ -280,6 +410,7 @@ operando_node* generate_operando_node(TERM_TYPE type,int num,exp_node* exp,var_n
   node->exp = exp;
   node->var = var;
   node->func = func;
+  node->pp = pp;
 
   return node;
 }
@@ -326,6 +457,93 @@ funcall_node* generate_funcall_node(char* id,list_exp_node* ls){
 
   node->id = strdup(id);
   node->ls_exp = ls;
+
+  return node;
+}
+
+pre_post_inc_node* generate_pre_post_inc_node(PRIORITY_TYPE p_type,char sign,var_node* var){
+  pre_post_inc_node* node = ALLOC(pre_post_inc_node,1);
+
+  node->p_type = p_type;
+  node->sign = sign;
+  node->var = var;
+
+  return node;
+}
+
+block_node* generate_block_node(BLOCK_TYPE type,void* p, block_node* next){
+  block_node* node = ALLOC(block_node,1);
+
+  node->type = type;
+  node->node = p;
+  node->next = next;
+  return node;
+}
+
+else_node* generate_else_node(block_node* block){
+  else_node* node = ALLOC(else_node,1);
+
+  node->block = block;
+
+  return node;
+}
+
+if_node* generate_if_node(exp_node* exp,block_node* block,else_node* else_n){
+  if_node* node = ALLOC(if_node,1);
+
+  node->exp = exp;
+  node->block = block;
+  node->else_n = else_n;
+
+  return node;
+}
+
+loop_node* generate_loop_node(LOOP_TYPE type,FOR_TYPE for_type,exp_node* exp,block_node* block,def_var_node* def,var_node* var,def_assign_node* ass,assign_node* a,pre_post_inc_node* pp){
+  loop_node* node = ALLOC(loop_node,1);
+
+  node->type = type;
+  node->for_type = for_type;
+  node->exp = exp;
+  node->block = block;
+  node->def = def;
+  node->ass = ass;
+  node->var = var;
+  node->a = a;
+  node->pp = pp;
+
+  return node;
+}
+
+return_node* generate_return_node(exp_node* exp){
+  return_node* node = ALLOC(return_node,1);
+
+  node->exp = exp;
+
+  return node;
+}
+
+var_list_node* generate_var_list(var_node* var,var_list_node* next){
+  var_list_node* node = ALLOC(var_list_node,1);
+
+  node->var = var;
+  node->next = next;
+
+  return node;
+}
+
+input_node* generate_input_node(var_list_node* ls){
+  input_node* node = ALLOC(input_node,1);
+
+  node->ls = ls;
+
+  return node;
+}
+
+output_node* generate_output_node(char* string,list_exp_node* ls){
+  output_node* node = ALLOC(output_node,1);
+
+  node->string = strdup(string);
+  node->exp_ls = ls;
 
   return node;
 }
