@@ -90,7 +90,7 @@ void LISP_switch_op(EXP_Type val){
     break;
 
     case OP_MOD:
-    printf(" %s", "%" );
+    printf(" %s", "rem" );
     break;
 
     case OP_GREATER:
@@ -408,6 +408,42 @@ void LISP_loop_node(loop_node* node){
       LISP_exp_node(node->exp);
     break;
 
+    case LOOP_FOR:
+    printf("%s","  let ");
+    printf("%s", " (" );
+    LISP_let_def_var_node(node->def);
+    printf("%s", " )" );
+    printf("%s", " (" );
+    printf("%s","  progn " );
+    printf("%s", " (" );
+    printf("%s", " loop while" );
+    LISP_exp_node(node->exp);
+    printf("%s"," do " );
+    printf(" %s", "(" );
+    LISP_block_node(node->block);
+    printf(" %s", ")" );
+    printf(" %s", "(" );
+    switch (node->for_type) {
+      case FOR_PP:
+        LISP_pre_post_inc_node(node->pp);
+      break;
+
+      case FOR_AWO:
+        LISP_print_set_var(node->ass->var);
+        LISP_print_var_node(node->ass->var);
+        LISP_exp_node(node->ass->assign->exp);
+      break;
+
+      default:
+        LISP_print_set_var(node->var);
+        LISP_print_var_node(node->var);
+        LISP_exp_node(node->a->exp);
+      break;
+    }
+    printf(" %s", ")" );
+    printf(" %s", ")" );
+    printf(" %s", ")" );
+    break;
   }
 }
 

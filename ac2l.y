@@ -138,9 +138,9 @@ var_list     : ',' var var_list { $$ = generate_var_list($2,$3); }
 
 loop         : WHILE '(' exp ')' '{' block '}' { $$ = generate_while_node($3,$6); }
               | DO '{' block '}' WHILE '(' exp ')' ';' { $$ = generate_do_while_node($7,$3); }
-              | FOR '('def_var exp ';' var assign ')' '{' block '}' { $$ = NULL; }
-              | FOR '('def_var exp ';' assign_with_op ')' '{' block '}' { $$ = NULL; }
-              | FOR '('def_var exp ';' pre_post_inc ')' '{' block '}' { $$ = NULL; }
+              | FOR '('def_var exp ';' var assign ')' '{' block '}' { $$ = generate_for_var_assign($3,$4,$6,$7,$10); }
+              | FOR '('def_var exp ';' assign_with_op ')' '{' block '}' { $$ = generate_for_awo($3,$4,$6,$9); }
+              | FOR '('def_var exp ';' pre_post_inc ')' '{' block '}' { $$ = generate_for_pp($3,$4,$6,$9); }
               ;
 
 pre_post_inc : var INC  { $$ = generate_pre_post_inc_node(POST,'+',$1); }
@@ -181,6 +181,7 @@ func         :          INTEGER IDENTIF '(' arg ')' '{' block '}' { $$ = generat
              ;
 
 arg          :          INTEGER var args { $$ = generate_args_node($2,$3); }
+              |         INTEGER '*' var args { $$ = generate_args_node($3,$4); }
               |         /* lambda */ { $$ = NULL; }
              ;
 

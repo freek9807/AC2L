@@ -25,8 +25,11 @@
 #define generate_return_block_node(e,n) generate_block_node(BLOCK_RETURN,generate_return_node(e),n)
 #define generate_input_block_node(i,n) generate_block_node(BLOCK_INPUT,i,n)
 #define generate_output_block_node(o,n) generate_block_node(BLOCK_OUTPUT,o,n)
-#define generate_while_node(e,b) generate_loop_node(LOOP_WHILE,e,b,NULL,NULL,NULL,NULL)
-#define generate_do_while_node(e,b) generate_loop_node(LOOP_DO_WHILE,e,b,NULL,NULL,NULL,NULL)
+#define generate_while_node(e,b) generate_loop_node(LOOP_WHILE,USELESS,e,b,NULL,NULL,NULL,NULL,NULL)
+#define generate_do_while_node(e,b) generate_loop_node(LOOP_DO_WHILE,USELESS,e,b,NULL,NULL,NULL,NULL,NULL)
+#define generate_for_var_assign(d,e,v,a,b) generate_loop_node(LOOP_FOR,FOR_N,e,b,d,v,NULL,a,NULL)
+#define generate_for_awo(d,e,a,b) generate_loop_node(LOOP_FOR,FOR_AWO,e,b,d,NULL,a,NULL,NULL)
+#define generate_for_pp(d,e,pp,b) generate_loop_node(LOOP_FOR,FOR_PP,e,b,d,NULL,NULL,NULL,pp)
 
 #include <stdio.h>
 #include <string.h>
@@ -66,11 +69,16 @@ typedef enum {
 
 typedef enum {
   LOOP_FOR,
-  LOOP_FOR_PP,
-  LOOP_FOR_AWO,
   LOOP_WHILE,
   LOOP_DO_WHILE
 } LOOP_TYPE;
+
+typedef enum {
+  USELESS,
+  FOR_N,
+  FOR_AWO,
+  FOR_PP
+} FOR_TYPE;
 //Tipo di operatore
 typedef enum ExpType
 {
@@ -250,11 +258,13 @@ typedef struct if_block{
 
 typedef struct loop{
   LOOP_TYPE type;
+  FOR_TYPE for_type;
   exp_node* exp;
   block_node* block;
   def_var_node* def;
   var_node* var;
   def_assign_node* ass;
+  assign_node* a;
   pre_post_inc_node* pp;
 } loop_node;
 
@@ -488,15 +498,17 @@ if_node* generate_if_node(exp_node* exp,block_node* block,else_node* else_n){
   return node;
 }
 
-loop_node* generate_loop_node(LOOP_TYPE type,exp_node* exp,block_node* block,def_var_node* def,var_node* var,def_assign_node* ass,pre_post_inc_node* pp){
+loop_node* generate_loop_node(LOOP_TYPE type,FOR_TYPE for_type,exp_node* exp,block_node* block,def_var_node* def,var_node* var,def_assign_node* ass,assign_node* a,pre_post_inc_node* pp){
   loop_node* node = ALLOC(loop_node,1);
 
   node->type = type;
+  node->for_type = for_type;
   node->exp = exp;
   node->block = block;
   node->def = def;
   node->ass = ass;
   node->var = var;
+  node->a = a;
   node->pp = pp;
 
   return node;
