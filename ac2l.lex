@@ -27,6 +27,7 @@ int yyparse();
 "do"            { return(DO); }
 "for"           { return(FOR); }
 "printf"        { return(PRINT); }
+"scanf"         { return(SCAN); }
 "puts"          { return(PUTS); }
 "return"        { return(RETURN); }
 "void"          { return(VOID); }

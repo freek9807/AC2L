@@ -35,6 +35,9 @@ int yyerror (char* mensaje);
       def_assign_node* assign_block;
       pre_post_inc_node* pp;
       loop_node* loop;
+      var_list_node* var_ls;
+      input_node* input;
+      output_node* output;
       AST_node* ast;
 }
 
@@ -42,7 +45,7 @@ int yyerror (char* mensaje);
 %token <string> IDENTIF
 %token <string> INTEGER VOID
 %token <string> LISP_STRING STRING
-%token <string> DO WHILE IF THEN ELSE PRINT PUTS RETURN FOR
+%token <string> DO WHILE IF THEN ELSE PRINT SCAN PUTS RETURN FOR
 %token <string> INC DEC PLUSVAL MINUSVAL MULTVAL DIVVAL
 %token <string> ANDL ORL GREATER_EQ LESS_EQ EQ NOTEQ
 %right '=' '?' ':'
@@ -76,6 +79,9 @@ int yyerror (char* mensaje);
 %type <else_n> else_block
 %type <pp> pre_post_inc
 %type <loop> loop
+%type <var_ls> var_list
+%type <input> input
+%type <output> output
 %%
 
 principale  :   def lisp_code { $$ = generate_ast_node($1,$2); LISP_AST_node($$); }
@@ -92,7 +98,7 @@ def_var      :     INTEGER var assign ';'	{ $$ = generate_def_var_node($2,$3); }
 var          :     IDENTIF array  { $$ = generate_var_node($1,$2); }
             ;
 
-array       :       '[' NUMBER ']' array { $$ = generate_array_node($2,$4); }
+array       :       '[' exp ']' array { $$ = generate_array_node($2,$4); }
             | /* lambda */        { $$ = NULL; }
              ;
 
@@ -115,14 +121,26 @@ block        : def_var block { $$ = generate_def_block_node($1,$2); }
              |   funcall ';' block { $$ = generate_funcall_block_node($1,$3); }
              |   loop block { $$ = generate_loop_block_node($1,$2); }
              |   RETURN exp ';' block { $$ = generate_return_block_node($2,$4); }
+             |   input ';' block      { $$ = generate_input_block_node($1,$3); }
+             |   output ';' block     { $$ = generate_output_block_node($1,$3); }
              | /* lambda */   { $$ = NULL; }
+             ;
+
+output:      PRINT '(' STRING list_exp ')'{ $$ = generate_output_node($3,$4); }
+             ;
+
+input:       SCAN '(' STRING var_list ')' { $$ = generate_input_node($4); }
+             ;
+
+var_list     : ',' var var_list { $$ = generate_var_list($2,$3); }
+             | /* lambda */           { $$ = NULL; }
              ;
 
 loop         : WHILE '(' exp ')' '{' block '}' { $$ = generate_while_node($3,$6); }
               | DO '{' block '}' WHILE '(' exp ')' ';' { $$ = generate_do_while_node($7,$3); }
-              | FOR '('def_var exp ';' var assign ')' '{' block '}' { $$ = NULL; }
-              | FOR '('def_var exp ';' assign_with_op ')' '{' block '}' { $$ = NULL; }
-              | FOR '('def_var exp ';' pre_post_inc ')' '{' block '}' { $$ = NULL; }
+              | FOR '('def_var exp ';' var assign ')' '{' block '}' { $$ = generate_for_var_assign($3,$4,$6,$7,$10); }
+              | FOR '('def_var exp ';' assign_with_op ')' '{' block '}' { $$ = generate_for_awo($3,$4,$6,$9); }
+              | FOR '('def_var exp ';' pre_post_inc ')' '{' block '}' { $$ = generate_for_pp($3,$4,$6,$9); }
               ;
 
 pre_post_inc : var INC  { $$ = generate_pre_post_inc_node(POST,'+',$1); }
@@ -163,6 +181,7 @@ func         :          INTEGER IDENTIF '(' arg ')' '{' block '}' { $$ = generat
              ;
 
 arg          :          INTEGER var args { $$ = generate_args_node($2,$3); }
+              |         INTEGER '*' var args { $$ = generate_args_node($3,$4); }
               |         /* lambda */ { $$ = NULL; }
              ;
 
