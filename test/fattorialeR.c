@@ -1,3 +1,4 @@
+#include <stdio.h>
 int factorial(int n){
 	int retorno;
 	if(n==1){

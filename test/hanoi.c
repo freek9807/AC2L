@@ -1,3 +1,4 @@
+#include <stdio.h>
 void move(int n, int from, int via, int to)
 {
   if (n > 1) {
