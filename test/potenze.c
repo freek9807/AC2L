@@ -4,29 +4,25 @@
 int potencias [100] ;
 int m ;
 
-main ()
+int main()
 {
     int i ;
 
     m = 30 ;
 
-    i = 1 ; 
+    i = 1 ;
     potencias [0] = 1 ;
     while (i < m) {    // corregido 2019 el limite <= por <
         potencias [i] = potencias [i-1] * 2 ;
         i = i + 1 ;
     }
 
-//@  cr
-    i = 1 ; 
+    i = 1 ;
+    printf("\n");
     while (i < m) {   // corregido 2019 el limite <= por <
-//@  ." Potencia de 2 a la  " 
-//@  main_i @ . ." : " 
-        printf (" %d  ", potencias [i]) ;
-//@  cr
+        printf ("Potencia de 2 a la %d : %d  \n",i, potencias [i]) ;
         i = i + 1 ;
     }
 }
 
-//@ main
-
+//@ ( main)
