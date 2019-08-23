@@ -3,7 +3,7 @@ CC=gcc
 CFLAG=-ll -ly -o
 LEXER=flex
 PARSER=bison
-CLISP=sbcl
+LISP=sbcl
 # Controlla se FILE è settato
 ifeq ($(FILE),)
 FILE := file
@@ -26,7 +26,7 @@ main:
 .PHONY: ac2l
 ac2l:
 	$(call generate_files)
-	./ac2l | $(CLISP)
+	./ac2l | $(LISP)
 # Genera l'equivalente lisp del programma C in FILE e lo salva in OUTPUT
 .PHONY: out
 out:
@@ -37,7 +37,7 @@ out:
 .PHONY: tol
 tol:
 	$(call generate_files)
-	./ac2l < test/$(FILE).c | $(CLISP)
+	./ac2l < test/$(FILE).c | $(LISP)
 .PHONY: clean
 clean:
 	rm -r ac2l.tab.h ac2l.tab.c lex.yy.c ac2l
