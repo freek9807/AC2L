@@ -28,7 +28,7 @@ make
 
 # Use FILE (in src folder) on input to generate Lisp code .
 # If FILE is not set , it will use src/file.txt
-make tof FILE=foo
+make tol FILE=foo
 
 # Use FILE (in src folder) on input to generate Lisp code in OUTPUT (in out folder) .
 # If FILE is not set , it will use src/file.txt
@@ -39,10 +39,17 @@ make out FILE=foo OUTPUT=bar
 
 ## Project Structure
 
-/src - It contains .c file to generate the AST (ast.c) and translate it to LISP (lisp.c)
-/test - It contains some .c testing programs
-/ac2l.lex - Lexer file
-/ac2l.y - Parser file
+
+```
+    .
+    ├── src                   # It contains .c file to generate the AST (ast.c) and translate it to LISP (lisp.c)
+    ├── test                  # It contains some .c testing programs
+    ├── AC2L.y                # Parser file
+    ├── ac2l.lex              # Lexer file
+    ├── LICENSE
+    └── README.md
+```
+
 
 ## Built With
 
