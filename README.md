@@ -46,6 +46,7 @@ make out FILE=foo OUTPUT=bar
     ├── test                  # It contains some .c testing programs
     ├── AC2L.y                # Parser file
     ├── ac2l.lex              # Lexer file
+    ├── Makefile
     ├── LICENSE
     └── README.md
 ```
