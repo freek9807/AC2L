@@ -33,7 +33,6 @@ make tol FILE=foo
 # Use FILE (in src folder) on input to generate Lisp code in OUTPUT (in out folder) .
 # If FILE is not set , it will use src/file.txt
 # If OUTPUT is not set , it will use out/output.txt
-
 make out FILE=foo OUTPUT=bar
 ```
 
