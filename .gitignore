@@ -57,3 +57,5 @@ ac2l.tab.h
 lex.yy.c
 
 out/
+
+*.txt

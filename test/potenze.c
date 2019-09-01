@@ -1,4 +1,3 @@
-// Potencias de DOS
 #include <stdio.h>
 
 int potencias [100] ;
@@ -12,14 +11,14 @@ int main()
 
     i = 1 ;
     potencias [0] = 1 ;
-    while (i < m) {    // corregido 2019 el limite <= por <
+    while (i < m) {
         potencias [i] = potencias [i-1] * 2 ;
         i = i + 1 ;
     }
 
     i = 1 ;
     printf("\n");
-    while (i < m) {   // corregido 2019 el limite <= por <
+    while (i < m) {
         printf ("Potencia de 2 a la %d : %d  \n",i, potencias [i]) ;
         i = i + 1 ;
     }
