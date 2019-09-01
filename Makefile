@@ -32,7 +32,7 @@ ac2l:
 out:
 	mkdir -p out
 	$(call generate_files)
-	./ac2l < test/$(FILE).c > out/$(OUTPUT).lisp
+	./ac2l < test/$(FILE).c > out/$(FILE).lisp
 #  Prende un file in input e lo esegue in LISP
 .PHONY: tol
 tol:
