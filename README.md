@@ -1,6 +1,6 @@
 # AC2L ( Another Compiler to LISP )
 
-C Compiler using Bison that translate to LISP .
+C to LISP compiler using Bison.
 
 ## Getting Started
 
